@@ -90,7 +90,7 @@ do  -- keep local things inside
 
     -- 实例类型检查
     local function classMade(class, inst)
-        if (mate[inst] == nil) then
+        if (meta[inst] == nil) then
             return false
         else
             return (tryCast(class, inst) ~= nil)
@@ -102,7 +102,7 @@ do  -- keep local things inside
         if type(name) ~= "string" then
             name = "unnamed"
         end
-        local clazz = {}
+        local class = {}
         local block = -- 继承元方法（这些方法不会自动向上查找）
         {
             __tostring = base.static.__tostring,
@@ -127,86 +127,72 @@ do  -- keep local things inside
             __le       = base.static.__le,
             __call     = base.static.__call,
         }
-        block.class = function() return clazz end
-        block.init = function(inst, ...) inst.super:init(...) end
-        block.__newindex = function(inst, k, v)
-            if (inst.super[k] ~= nil) then
-                inst.super[k] = v   -- 优先更新父类
+        block.class = function(obj, ...)        -- 返回实例类型
+            return class
+        end
+        block.init  = function(obj, ...)        -- 默认构造方法
+            obj.super:init(...)
+        end
+        block.__newindex = function(obj, k, v)  -- 更新实例属性（注意实例属性，不是类型属性）
+            if (obj.super[k] ~= nil) then
+                obj.super[k] = v  -- 优先更新父类
             else
-                rawset(inst, k, v)  -- 创建新字段
+                rawset(obj, k, v) -- 更新实例属性
             end
         end
-        block.__index = function(inst, k)
+        block.__index = function(obj, k)        -- 访问实例属性（实例属性优先，类型属性其次）
             local rvalue = block[k]
             if (rvalue ~= nil) then
-                return rvalue
+                return rvalue     -- 获取类型属性
             end
-            -- 查找父类
-            rvalue = inst.super[key]
+            -- 查找父类属性
+            rvalue = obj.super[k]
             if (type(rvalue) == "function") then
-                -- 深度嵌套(深度较大的情况下)
-                local object = inst.super
-                local fn     = rvalue
-                return function(inst, ...)
-                    return vn(object, ...)
+                local super = obj.super
+                local fn    = rvalue
+                return function(obj, ...)
+                    return fn(super, ...)
                 end
             end
             return rvalue
         end
-        local class = 
-        {
-            static   = block,
-            made     = classMade,           
-            new      = newInstance,
-            subclass = subclass,
-            virtual  = makeVirtual,
-            cast     = secureCast,
-            trycast  = tryCast,
-        }
-        function class.name(class)
-            return name
-        end
-        function class.super(class)
-            return base
-        end
-        function class.inherits(class, other)
-            return (base == other or base:inherits(other))
-        end
 
         -- 保存虚表
-        meta[clazz] = {virtuals = duplicate(meta[base].virtuals)}
+        meta[class] = { virtuals = duplicate(meta[base].virtuals) }
 
-        -- 绑定元表
-        setmetatable(clazz, 
+        -- 绑定元表（类型各种功能通过元表实现）
+        setmetatable(class,
         {
-            __newindex = function(class, k, v)
+            __newindex = function(class, k, v)  -- 更新类型属性(包括虚属性)
                 block[k] = v
                 if (meta[class].virtuals[k] ~= nil) then
                     meta[class].virtuals[k] = v
                 end
             end,
-            __index = class,
+            __index =                           -- 获取类型属性
+            {
+                static   = block,               -- '类型方法/静态属性'集合（实例对象元表）
+                made     = classMade,           -- 实例类型检查
+                new      = newInstance,         -- 实例创建接口
+                subclass = subclass,            -- 子类创建接口
+                virtual  = makeVirtual,         -- 虚属性定义
+                cast     = secureCast,          -- 实例类型转换（类似'C++'的类型强制转换）
+                trycast  = tryCast,             -- 实例类型转换（类似'C++'的类型强制转换）
+                super = function(class)
+                    return base
+                end,
+                name = function(class)
+                    return name
+                end,
+                inherits = function(class, other)
+                    return (base == other or base:inherits(other))
+                end,
+            },
+            __call     = newInstance,           -- 
             __tostring = function() return name end,
-            __call = newInstance,
         })
-        return clazz
+        return class
     end
-
-    -- 类结构描述（类本身是一个空表[构建后可定义方法/属性]，通过元表实现继承）
-    -- 1. __newindex : 提供'方法'/'属性'的定义功能
-    -- 2. __index    :
-    --    {
-    --      static   : 类型'方法'/'属性'集合
-    --      made     : 类型检查接口
-    --      new      : 实例创建接口
-    --      subclass : 子类定义接口
-    --      virtual  : 定义虚方法
-    --      cast     : 类型转换接口
-    --      trycast  : 类型装欢接口
-    --      name     : 获取类型名称
-    --      super    : 获取父类型
-    --      inherits : 继承检查接口
-    --    }
 
     -----------------------------------------------------------------
     --- 基类'Object'
@@ -216,44 +202,48 @@ do  -- keep local things inside
     -- 禁止修改
     local function newindex() error "May not modify the class 'Object'." end
 
-    -- 公共属性（静态属性以及类型方法集合）
-    local block = {} 
-    block.__index = block
-    block.__newindex = newindex
-    function block:init(inst, ...) end 
-    function block.class() return Object end
-    function block.__tostring(inst) return ("a " .. inst:class():name()) end
-
-    -- 类型定义（提供了类型相关的操作方法）
-    local class = 
-    {
-        static   = block,
-        made     = classMade,           
-        new      = newInstance,
-        subclass = subclass,
-        cast     = secureCast,
-        trycast  = tryCast,
-    }
-    function class.name(class)
-        return "Object"
+    -- '类型方法/静态属性'集合
+    local block = {}
+    block.__newindex = newindex                 -- 禁止修改'类型方法/静态属性'
+    block.__index = block                       -- 允许访问'类型方法/静态属性'
+    block.__tostring = function(obj)            -- 返回对象描述
+        return ("a " .. obj:class():name())
     end
+    block.init  = function(obj, ...) end        -- 默认构造方法
+    block.class = function(obj, ...)            -- 返回实例类型
+        return Object
+    end
+
+    -- 类型元表
+    local class =
+    {
+        static   = block,                       -- '类型方法/静态属性'集合（实例对象元表）
+        made     = classMade,                   -- 实例类型检查
+        new      = newInstance,                 -- 实例创建接口
+        subclass = subclass,                    -- 子类创建接口
+        cast     = secureCast,                  -- 实例类型转换（类似'C++'的类型强制转换）
+        trycast  = tryCast,                     -- 实例类型转换（类似'C++'的类型强制转换）
+    }
     function class.super(class)
         return nil
     end
-    function inherits(class, other)
+    function class.name(class)
+        return "Object"
+    end
+    function class.inherits(class, other)
         return false
     end
 
     -- 保存虚表
-    meta[Object] = {virtuals = {}}
+    meta[Object] = { virtuals = {} }
 
-    -- 绑定元表
-    setmetatable(Object, 
+    -- 绑定元表（类型各种功能通过元表实现）
+    setmetatable(Object,
     {
-        __newindex = newindex,
-        __index = class,
+        __newindex = newindex,                  -- 禁止修改基类
+        __index    = class,                     -- 访问基类属性
+        __call     = newInstance,
         __tostring = function() return "Object" end,
-        __call = newInstance,
     })
 
     -----------------------------------------------------------------
@@ -265,55 +255,3 @@ do  -- keep local things inside
     end
 
 end
-
-
-
-
-
-
-local __TABLE_MAX_DEPTH = 9
-
-local function __gtab(depth)
-    local retval = ""
-    for i = 1, depth do
-        retval = retval .. "\t"
-    end
-    return retval
-end
-
-local function __dump(t, depth, collect)
-    local retval = ""
-    if type(t) == "table" then
-        if (collect[t] ~= nil) then
-            retval = retval .. "table[...]"
-        else
-            collect[t] = true
-            depth = depth + 1
-            if depth > __TABLE_MAX_DEPTH then
-                retval = retval .. "..."
-            else
-                retval = retval .. "{\n"
-                for k, v in pairs(t) do
-                    retval = retval .. __gtab(depth) .. tostring(k) .. " = " .. __dump(v, depth, collect) .. ",\n"
-                end
-                retval = retval .. __gtab(depth - 1) .. "}"
-            end
-        end
-    else
-        retval = retval .. tostring(t)
-    end
-    return retval
-end
-
-function table.tostring(t)
-    if type(t) ~= "table" then
-        return "UNKNOWN"
-    else
-        return __dump(t, 0, {})
-    end
-end
-
-
-
-
-
