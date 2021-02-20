@@ -2,7 +2,7 @@
 --- 测试框架（参考'torch7'设计实现）
 -------------------------------------------------------------------------------
 
-local NWIDTH = 80     -- 显示宽度
+local NWIDTH = 120     -- 显示宽度
 
 local function pluralize(num, str)
     local stem = num .. ' ' .. str
@@ -20,14 +20,14 @@ end
 -- 着色处理
 local colourable, colours = pcall(require, 'luamon.utils.colours')
 local coloured
-if colourable then
-    coloured = function(str, colour)
-        return colour .. str .. colours.none
+if not colourable then
+    colours  = {}
+    coloured = function(str)
+        return str
     end
 else
-    colours  = {}
     coloured = function(str, colour)
-        return str
+        return colour .. str .. colours.none
     end
 end
 
@@ -161,7 +161,7 @@ function block:expect_lt(v1, v2, message)
     if (v1 < v2) then
         return success(self)
     else
-        local errmsg = string.format('%sLT failed : %s[%s] >= %s[%s]',
+        local errmsg = string.format('%sexpect_lt(%s[%s], %s[%s]) failed.',
                                      message or '',
                                      tostring(v1), type(v1),
                                      tostring(v2), type(v2))
@@ -173,7 +173,7 @@ function block:assert_lt(v1, v2, message)
     if (v1 < v2) then
         return success(self)
     else
-        local errmsg = string.format('%sLT failed : %s[%s] >= %s[%s]',
+        local errmsg = string.format('%sassert_lt(%s[%s], %s[%s]) failed.',
                                      message or '',
                                      tostring(v1), type(v1),
                                      tostring(v2), type(v2))
@@ -185,7 +185,7 @@ function block:expect_gt(v1, v2, message)
     if (v1 > v2) then
         return success(self)
     else
-        local errmsg = string.format('%sGT failed : %s[%s] <= %s[%s]',
+        local errmsg = string.format('%sexpect_gt(%s[%s], %s[%s]) failed.',
                                      message or '',
                                      tostring(v1), type(v1),
                                      tostring(v2), type(v2))
@@ -197,7 +197,7 @@ function block:assert_gt(v1, v2, message)
     if (v1 > v2) then
         return success(self)
     else
-        local errmsg = string.format('%sGT failed : %s[%s] <= %s[%s]',
+        local errmsg = string.format('%sassert_gt(%s[%s], %s[%s]) failed.',
                                      message or '',
                                      tostring(v1), type(v1),
                                      tostring(v2), type(v2))
@@ -209,7 +209,7 @@ function block:expect_le(v1, v2, message)
     if (v1 <= v2) then
         return success(self)
     else
-        local errmsg = string.format('%sLE failed : %s[%s] > %s[%s]',
+        local errmsg = string.format('%sexpect_le(%s[%s], %s[%s]) failed.',
                                      message or '',
                                      tostring(v1), type(v1),
                                      tostring(v2), type(v2))
@@ -221,7 +221,7 @@ function block:assert_le(v1, v2, message)
     if (v1 <= v2) then
         return success(self)
     else
-        local errmsg = string.format('%sLE failed : %s[%s] > %s[%s]',
+        local errmsg = string.format('%sasert_le(%s[%s], %s[%s]) failed.',
                                      message or '',
                                      tostring(v1), type(v1),
                                      tostring(v2), type(v2))
@@ -233,7 +233,7 @@ function block:expect_ge(v1, v2, message)
     if (v1 >= v2) then
         return success(self)
     else
-        local errmsg = string.format('%sGE failed : %s[%s] < %s[%s]',
+        local errmsg = string.format('%sexpect_ge(%s[%s], %s[%s]) failed.',
                                      message or '',
                                      tostring(v1), type(v1),
                                      tostring(v2), type(v2))
@@ -245,7 +245,7 @@ function block:assert_ge(v1, v2, message)
     if (v1 >= v2) then
         return success(self)
     else
-        local errmsg = string.format('%sGE failed : %s[%s] < %s[%s]',
+        local errmsg = string.format('%sassert_ge(%s[%s], %s[%s]) failed.',
                                      message or '',
                                      tostring(v1), type(v1),
                                      tostring(v2), type(v2))
@@ -263,7 +263,7 @@ function block:expect_true(condition, message)
     if condition then
         return success(self)
     else
-        local errmsg = string.format('%sviolation : condition = %s[%s]',
+        local errmsg = string.format('%sexpect_true(%s[%s]) violation.',
                                      message or '',
                                      tostring(condition), type(condition))
         return failure(self, errmsg)
@@ -277,7 +277,7 @@ function block:assert_true(condition, message)
     if condition then
         return success(self)
     else
-        local errmsg = string.format('%sviolation : condition = %s[%s]',
+        local errmsg = string.format('%sassert_true(%s[%s]) violation.',
                                      message or '',
                                      tostring(condition), type(condition))
         return failure(self, errmsg, 'rethrow')
@@ -291,7 +291,7 @@ function block:expect_false(condition, message)
     if not condition then
         return success(self)
     else
-        local errmsg = string.format('%sviolation : condition = %s[%s]',
+        local errmsg = string.format('%sexpect_false(%s[%s]) violation.',
                                      message or '',
                                      tostring(condition), type(condition))
         return failure(self, errmsg)
@@ -305,7 +305,7 @@ function block:assert_false(condition, message)
     if not condition then
         return success(self)
     else
-        local errmsg = string.format('%sviolation : condition = %s[%s]',
+        local errmsg = string.format('%sassert_false(%s[%s]) violation.',
                                      message or '',
                                      tostring(condition), type(condition))
         return failure(self, errmsg, 'rethrow')
@@ -316,49 +316,49 @@ end
 --- 异常判断逻辑
 
 function block:expect_error(fn, message)
-    local ok, errmsg = pcall(fn)
+    local ok, rvalue = pcall(fn)
     if not ok then
         return success(self)
     else
-        local errmsg = string.format('%sERROR violation : err = %s',
+        local errmsg = string.format('%sexpect_error() violation : rvalue = %s',
                                      message or '',
-                                     tostring(errmsg))
+                                     tostring(rvalue))
         return failure(self, errmsg)
     end
 end
 
 function block:assert_error(fn, message)
-    local ok, errmsg = pcall(fn)
+    local ok, rvalue = pcall(fn)
     if not ok then
         return success(self)
     else
-        local errmsg = string.format('%sERROR violation : err = %s',
+        local errmsg = string.format('%sassert_error() violation : rvalue = %s',
                                      message or '',
-                                     tostring(errmsg))
+                                     tostring(rvalue))
         return failure(self, errmsg, 'rethrow')
     end
 end
 
 function block:expect_not_error(fn, message)
-    local ok, errmsg = pcall(fn)
+    local ok, rvalue = pcall(fn)
     if ok then
         return success(self)
     else
-        local errmsg = string.format('%sERROR violation : err = %s',
+        local errmsg = string.format('%sexpect_not_error() violation : err = %s',
                                      message or '',
-                                     tostring(errmsg))
+                                     tostring(rvalue))
         return failure(self, errmsg)
     end
 end
 
 function block:assert_not_error(fn, message)
-    local ok, errmsg = pcall(fn)
+    local ok, rvalue = pcall(fn)
     if ok then
         return success(self)
     else
-        local errmsg = string.format('%sERROR violation : err = %s',
+        local errmsg = string.format('%sassert_not_error() violation : err = %s',
                                      message or '',
-                                     tostring(errmsg))
+                                     tostring(rvalue))
         return failure(self, errmsg, 'rethrow')
     end
 end
@@ -377,13 +377,13 @@ function block:run()
     rawset(self, '__failure_errors', {})
     rawset(self, '__warning_counts', {})
     rawset(self, '__warning_errors', {})
-    for name in pairs(tests) do
+    for _, v in ipairs(tests) do
         ncount = ncount + 1
-        self.__success_counts[name] = 0
-        self.__failure_counts[name] = 0
-        self.__failure_errors[name] = {}
-        self.__warning_counts[name] = 0
-        self.__warning_errors[name] = {}
+        self.__success_counts[v.name] = 0
+        self.__failure_counts[v.name] = 0
+        self.__failure_errors[v.name] = {}
+        self.__warning_counts[v.name] = 0
+        self.__warning_errors[v.name] = {}
     end
 
     -- 进度显示参数
@@ -392,47 +392,59 @@ function block:run()
     local cfmtlen = cstr:len() * 2 + 3
 
     -- 开始测试操作
-    io.write('Running ' .. pluralize(ncount, 'test') .. '\n')                   -- 显示测试用例总量
+    io.write(coloured('Running ' .. pluralize(ncount, 'test'), colours.blue) .. '\n')      -- 显示测试用例总量
+    io.write(coloured(string.rep('=', NWIDTH), colours.blue) .. '\n')
     local i = 1
-    for name, fn in pairs(tests) do
-        rawset(self, '__current_test_name', name)
+    for _, v in ipairs(tests) do
+        rawset(self, '__current_test_name', v.name)
         -- 显示用例状态
-        local strinit = coloured(string.format(cfmt, i), colours.cyan)
-                        .. name
+        local strinit = coloured(string.format(cfmt, i), colours.blue)
+                        .. v.name
                         .. ' '
-                        .. string.rep('.', NWIDTH - 6 - 2 - cfmtlen - name:len())
+                        .. string.rep('.', NWIDTH - 8 - cfmtlen - v.name:len())
                         .. ' '
         io.write(strinit .. bracket(coloured('WAIT', colours.cyan)))
         io.flush()
         -- 执行测试用例
         if (fixtures.setup ~= nil) then
-            fixtures.setup(name)
+            fixtures.setup(v.name)
         end
-        local ok, rvalue = pcall(fn)
+        local ok, rvalue = pcall(v.fn)
         if not ok then
-            self.__failure_counts[name] = self.__failure_counts[name] + 1
-            local errors = self.__failure_errors[name]
+            self.__failure_counts[v.name] = self.__failure_counts[v.name] + 1
+            local errors = self.__failure_errors[v.name]
             local errmsg = rvalue .. '\n'
             table.insert(errors, errmsg)
         end
         if (fixtures.teardown ~= nil) then
-            fixtures.teardown(name)
+            fixtures.teardown(v.name)
         end
         -- 更新用例状态
         io.write('\r' .. strinit)
-        if (self.__failure_counts[name] > 0) then
-            nerror = nerror + 1
-            io.write(bracket(coloured('FAIL', colours.magenta)))
+        if (self.__failure_counts[v.name] == 0) then
+            io.write(bracket(coloured('PASS', colours.green)) .. '\n')
         else
-            io.write(bracket(coloured('PASS', colours.green)))
-            if (self.__warning_counts[name] > 0) then
-                io.write('\n' .. string.rep(' ', NWIDTH - 10))
-                io.write(bracket(coloured('+warning', colours.yellow)))
+            nerror = nerror + 1
+            io.write(bracket(coloured('FAIL', colours.red)) .. '\n')
+            -- 打印错误信息
+            for j, text in ipairs(self.__failure_errors[v.name]) do
+                io.write(text .. '\n')
+                if (j < self.__failure_counts[v.name]) or (self.__warning_counts[v.name] > 0) then
+                    io.write(string.rep('-' , NWIDTH) .. '\n')
+                end
             end
         end
-        io.write('\n')
-        io.flush()
+        -- 打印告警信息
+        if (self.__warning_counts[v.name] ~= 0) then
+            for j, text in ipairs(self.__warning_errors[v.name]) do
+                io.write(text .. '\n')
+                if (j < self.__warning_counts[v.name]) then
+                    io.write(string.rep('-' , NWIDTH) .. '\n')
+                end
+            end
+        end
         i = i + 1
+        io.flush()
         collectgarbage()
     end
 
@@ -440,70 +452,74 @@ function block:run()
     local nasserts = 0
     local nfailure = 0
     local nwarning = 0
-    for name in pairs(tests) do
-        nasserts = nasserts + self.__success_counts[name] + self.__failure_counts[name]
-        nfailure = nfailure + self.__failure_counts[name]
-        nwarning = nwarning + self.__warning_counts[name]
+    for _, v in ipairs(tests) do
+        nasserts = nasserts + self.__success_counts[v.name] + self.__failure_counts[v.name]
+        nfailure = nfailure + self.__failure_counts[v.name]
+        nwarning = nwarning + self.__warning_counts[v.name]
     end
+    io.write(coloured(string.rep('=', NWIDTH), colours.blue) .. '\n')
     io.write(string.format('Completed %s in %s with %s and %s.\n',
                             pluralize(nasserts, 'assert'),
                             pluralize(ncount,   'test'  ),
                             coloured(pluralize(nfailure, 'failure'), nfailure == 0 and colours.green or colours.magenta),
                             coloured(pluralize(nwarning, 'warning'), nwarning == 0 and colours.green or colours.yellow)))
-    -- 打印错误信息
-    io.write('\n')
-    io.write(coloured(string.format("%s[ERRORS]%s\n", string.rep('=', math.floor((NWIDTH - 8) / 2)), string.rep('=', math.floor((NWIDTH - 10) / 2))), colours.magenta))
-    for name, errors in pairs(self.__failure_errors) do
-        -- 构造标题格式
-        local xnumber = #errors
-        local xstr    = string.format('%u', xnumber)
-        local xfmt    = string.format('[%%%uu/%u]', xstr:len(), xstr)
-        local xfmtlen = xstr:len() * 2 + 3
-        for i, text in ipairs(errors) do
-            local headline = coloured(string.format(xfmt, i), colours.magenta)
-                             .. name
-                             .. ' '
-                             .. string.rep('-', NWIDTH - 2 - xfmtlen - name:len())
-                             .. ' '
-            io.write(headline .. '\n')
-            io.write(text .. '\n')
-            io.flush()
-        end
-    end
-    -- 打印警告信息
-    for name, errors in pairs(self.__warning_errors) do
-        -- 构造标题格式
-        local xnumber = #errors
-        local xstr    = string.format('%u', xnumber)
-        local xfmt    = string.format('[%%uu/%u]', xstr:len(), xstr)
-        local xfmtlen = xstr:len() * 2 + 3
-        for i, text in ipairs(errors) do
-            local headline = coloured(string.format(xfmt, i), colours.yellow)
-                             .. name
-                             .. ' '
-                             .. string.rep('-', NWIDTH - 6 - 2 - xfmtlen - name:len())
-                             .. ' '
-            io.write(headline .. bracket(coloured('FAIL', colours.yellow)) .. '\n')
-            io.write(text .. '\n')
-            io.flush()
-        end
-    end
 end
 
-local meta = { tests = {} , __index = block }
+---------------------------------------------------------------------
+--- 测试组件模型
+---------------------------------------------------------------------
 
-function meta.__newindex(_, k, v)
-    meta.tests[k] = v
+local module = {}
+
+-- 创建测试器
+function module.new()
+    -- 构建测试元表
+    local meta =
+    {
+        fixtures    = {},         -- 固件列表
+        tests       = {},         -- 用例列表
+    }
+    meta.__index    = block
+    meta.__newindex = function(_, k, fn)
+        -- 类型检查
+        if (type(fn) ~= 'function') then
+            error('Only function supported.')
+        end
+        -- 方法注册
+        local kname = string.lower(k)
+        if (kname == 'setup') or (kname == 'teardown') then
+            -- 测试固件
+            if not meta.fixtures[kname] then
+                meta.fixtures[kname] = fn
+            else
+                error(string.format("Only one %s function allowed.", k))
+            end
+        else
+            -- 测试用例
+            for _, v in ipairs(meta.tests) do
+                if v.name == k then
+                    error('Test with name[' .. k .. '] already exists.')
+                end
+            end
+            table.insert(meta.tests, { name = k, fn = fn })
+        end
+    end
+    -- 构建测试实例
+    return setmetatable({}, meta)
 end
 
 
-local mytest = setmetatable({}, meta)
+
+
+local mytest = module.new()
 
 function mytest.testA()
     mytest:expect_eq(1, 2)
     mytest:expect_eq(1, 2)
-    mytest:expect_eq(1, 2)
-    mytest:expect_eq(1, 2)
+end
+
+function mytest.testB()
+mytest:expect_ne(1, 2)
 end
 
 mytest:run()
