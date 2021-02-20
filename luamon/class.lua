@@ -135,15 +135,15 @@ do  -- keep local things inside
         end
         block.__newindex = function(obj, k, v)  -- 更新实例属性（注意实例属性，不是类型属性）
             if (obj.super[k] ~= nil) then
-                obj.super[k] = v  -- 优先更新父类
+                obj.super[k] = v                -- 优先更新父类
             else
-                rawset(obj, k, v) -- 更新实例属性
+                rawset(obj, k, v)               -- 更新实例属性
             end
         end
         block.__index = function(obj, k)        -- 访问实例属性（实例属性优先，类型属性其次）
             local rvalue = block[k]
             if (rvalue ~= nil) then
-                return rvalue     -- 获取类型属性
+                return rvalue                   -- 获取类型属性
             end
             -- 查找父类属性
             rvalue = obj.super[k]
