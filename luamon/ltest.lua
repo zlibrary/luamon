@@ -2,7 +2,7 @@
 --- 测试框架（参考'torch7'设计实现）
 -------------------------------------------------------------------------------
 
-local NWIDTH = 120     -- 显示宽度
+local NWIDTH = 90 -- 显示宽度
 
 local function pluralize(num, str)
     local stem = num .. ' ' .. str
@@ -508,90 +508,5 @@ function module.new()
     return setmetatable({}, meta)
 end
 
-
-
-
-local mytest = module.new()
-
-function mytest.testA()
-    mytest:expect_eq(1, 2)
-    mytest:expect_eq(1, 2)
-end
-
-function mytest.testB()
-mytest:expect_ne(1, 2)
-end
-
-mytest:run()
-
-
-
--- [xxxxxx]============================================================= 
--- [1/2]----------------------------------------------------------------
--- xxxx
--- [2/2]----------------------------------------------------------------
--- xxxx
-
--- [xxxxxx]============================================================= 
--- [1/2]----------------------------------------------------------------
--- xxxx
--- [2/2]----------------------------------------------------------------
--- xxxx
-
-
-
--- [ FAILURES ]========================================================
-
--- [WARNS]
-
-
--- local TestSuite = require "luamon.testsuite"
--- local mytest    = TestSuite:new()
-
--- function mytest.setup(name)
--- end
-
--- function mytest.teardown(name)
--- end
-
--- function mytest.testA()
---     mytest:EQ(...)
---     mytest:NE(...)
--- end
-
--- mytest:run()
-
--- -- 1. 重置'setup/teardown', 直接记录在 mytest 空间内应该是没有问题的。（'index'方法需要做一定的判断）
--- -- 2. 'run'方法不应该被覆盖
--- -- 3. 测试用例可以使用 __newindex 进行注册， 但是只能通过 run 方法访问。（'index'无法直接获得指定测试用例）
-
--- __index = 
--- {
---     1. 访问 'run' 方法。 (应该也可以放入 'fixtures' 中)
---     2. 访问相关断言操作。
-
---     -- 注意，方法是固定不变的（直接指向一个静态表对象应该是没有问题的）
--- }
-
--- __newindex = 
--- {
---     1. 注册 'setup/teardown' 方法， 写入 'fixtures' 中(因为只有 run 访问这两个方法， 所以可以强制转换为小写)
-
---     2. 注册测试用例， 写入 'tests' 中
-
---     -- 使用闭包指定数据存储位置？？
--- }
-
-
-
--- mytest = setmetatable({},
--- {
---     __index = function(_, k)
-
-        
-
-
--- })
-
-
-
+-- 导出测试模型
+return module
