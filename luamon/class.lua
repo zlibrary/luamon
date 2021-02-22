@@ -59,6 +59,14 @@ do  -- keep local things inside
         if m.class == class then
             return inst
         end
+        -- 向上转换
+        local m = meta[inst].super
+        while (m ~= nil) do
+            if m.class == class then
+                return m.obj
+            end
+            m = m.super
+        end
         -- 向下转换
         local m = meta[inst].child
         while (m ~= nil) do
@@ -66,14 +74,6 @@ do  -- keep local things inside
                 return m.obj
             end
             m = m.child
-        end
-        -- 向上转换
-        local m = meta[inst].super
-        while (m ~= nil) do
-            if m.class == class then
-                return m.obj
-            end
-            return m.super
         end
         return nil
     end
@@ -93,7 +93,7 @@ do  -- keep local things inside
         if (meta[inst] == nil) then
             return false
         else
-            return (tryCast(class, inst) ~= nil)
+            return (meta[inst].class == class) or meta[inst].class:inherits(class)
         end
     end
 
