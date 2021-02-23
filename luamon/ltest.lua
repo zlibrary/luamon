@@ -258,7 +258,7 @@ end
 
 function block:expect_true(condition, message)
     if type(condition) ~= 'boolean' then
-        warning(' :assert should only be used boolean conditions.')
+        warning(self, 'warning : assert should only be used boolean conditions.')
     end
     if condition then
         return success(self)
@@ -272,7 +272,7 @@ end
 
 function block:assert_true(condition, message)
     if type(condition) ~= 'boolean' then
-        warning(' :assert should only be used boolean conditions.')
+        warning(self, 'warning : assert should only be used boolean conditions.')
     end
     if condition then
         return success(self)
@@ -286,7 +286,7 @@ end
 
 function block:expect_false(condition, message)
     if type(condition) ~= 'boolean' then
-        warning(' :assert should only be used boolean conditions.')
+        warning(self, 'warning : assert should only be used boolean conditions.')
     end
     if not condition then
         return success(self)
@@ -300,7 +300,7 @@ end
 
 function block:assert_false(condition, message)
     if type(condition) ~= 'boolean' then
-        warning(' :assert should only be used boolean conditions.')
+        warning(self, 'warning : assert should only be used boolean conditions.')
     end
     if not condition then
         return success(self)
