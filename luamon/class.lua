@@ -42,7 +42,7 @@ do  -- keep local things inside
     -----------------------------------------------------------------
     --- 类型定义相关
 
-    -- 指定虚方法（？静态属性重载？）
+    -- 指定虚方法（静态属性重载）
     local function makeVirtual(class, fname)
         local func = class.static[fname]
         if (func == nil) then
