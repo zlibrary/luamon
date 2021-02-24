@@ -7,7 +7,7 @@ require "luamon.class"
 -- 构建测试实例
 local mytest = TestSuite.new()
 
-function mytest:testA()
+function mytest.testA()
 
     -- 类型定义
     local LivingBeing = newclass('LivingBeing')
@@ -126,7 +126,7 @@ function mytest:testA()
 end
 
 -- 虚函数测试
-function mytest:testB()
+function mytest.testB()
 
     -- 类型定义
     local A = newclass('A')
@@ -170,6 +170,57 @@ function mytest:testB()
     mytest:assert_eq(A:cast(b):F2(), "A:F2")
     mytest:assert_eq(A:cast(c):F1(), "C:F1")
     mytest:assert_eq(A:cast(c):F2(), "A:F2")
+end
+
+-- 私有数据测试（通过外部表'mtab'实现）
+function mytest.testC()
+
+    -- 外部数表
+    local mtab = {}
+
+
+    -- 类型定义
+    local A = newclass('A')
+
+    function A:init()
+        mtab[self] = {}
+    end
+
+    function A:set(k, v)
+        mtab[self][k] = v
+    end
+
+    function A:get(k)
+        return mtab[self][k]
+    end
+
+    -- 构建实例
+    local a = A:new()
+    local b = A:new()
+
+    -- 类型测试
+    mytest:assert_eq(a.class(), A)
+    mytest:assert_true(A:made(a))
+
+    -- 操作测试
+    for i = 1, 10 do
+        a:set(i, 'a' .. i)
+        b:set(i, 'b' .. i)
+    end
+
+    for i = 1, 10 do
+        mytest:assert_ne(a:get(i), b:get(i))
+    end
+
+    for i = 1, 10 do
+        mytest:assert_eq(a:get(i), 'a' .. i)
+    end
+
+    print('\n')
+    for k, v in pairs(a) do
+        print(k, v)
+    end
+
 end
 
 mytest:run()

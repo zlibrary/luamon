@@ -207,7 +207,7 @@ do  -- keep local things inside
     block.__newindex = newindex                 -- 禁止修改'类型方法/静态属性'
     block.__index = block                       -- 允许访问'类型方法/静态属性'
     block.__tostring = function(obj)            -- 返回对象描述
-        return ("a " .. obj:class():name())
+        return (obj:class():name())
     end
     block.init  = function(obj, ...) end        -- 默认构造方法
     block.class = function(obj, ...)            -- 返回实例类型
