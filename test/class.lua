@@ -137,6 +137,7 @@ function mytest.testB()
         return 'A:F2'
     end
     A:virtual('F1')
+    A.value = 0
 
     local B = A:subclass('B')
     function B:F1()
@@ -170,6 +171,19 @@ function mytest.testB()
     mytest:assert_eq(A:cast(b):F2(), "A:F2")
     mytest:assert_eq(A:cast(c):F1(), "C:F1")
     mytest:assert_eq(A:cast(c):F2(), "A:F2")
+
+    -- 静态数据检查
+    mytest:assert_eq(a.value, 0)
+    mytest:assert_eq(b.value, 0)
+    mytest:assert_eq(c.value, 0)
+
+    A.value = 1
+    mytest:assert_eq(a.value, 1)
+    mytest:assert_eq(b.value, 1)
+    mytest:assert_eq(c.value, 1)
+
+
+
 end
 
 -- 私有数据测试（通过外部表'mtab'实现）
@@ -177,7 +191,6 @@ function mytest.testC()
 
     -- 外部数表
     local mtab = {}
-
 
     -- 类型定义
     local A = newclass('A')

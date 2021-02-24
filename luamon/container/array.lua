@@ -13,9 +13,10 @@ setmetatable(mtable, {__mode = "k"})
 --- 'Array'定义
 local Array = newclass("Array")
 
-function Array:init(size)
-    -- 修正数组
-
+-- 构造函数
+function Array.init(inst, size)
+    assert(math.floor(size) == size)
+    assert(mtable[inst] == nil)
     local data = 
     {
     }
