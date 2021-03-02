@@ -45,17 +45,40 @@ end
 --- 'Array'迭代器
 local __array_iterator = newclass('luamon.container.__array_iterator')
 
-function __array_iterator(object, index)
-    self.__object = object
-    self.__index  = index
+function __array_iterator(base, index)
+    self.__base  = base
+    self.__index = index
 end
 
 function __array_iterator:get()
-    return self.__object.__elems[self.__index]
+    return self.__base:get(self.__index)
 end
 
 function __array_iterator:set(v)
-    self.__object.__elems[self.__index] = v
+    self.__base:set(self.__index, v)
+end
+
+function __array_iterator:advance(n)
+    local nm = tointeger(n)
+    if (nm == nil) then
+        error(string.format("'%s[%s]' is not valid argument for type 'unsigned int'.", n, type(n)))
+    else
+        self.__index = self.__index + nm
+        if (self.__index < 1) then
+            self.__index = 1
+        end
+        if (self.__index > self.__base:size()) then
+            self.__index = self.__base:size() + 1
+        end
+    end
+end
+
+function __array_iterator:__eq(v1, v2)
+    if (v1.class() ~= __array_iterator) or  (v1.class() ~= v2.class()) then
+        return false
+    else
+        return (v1.__base == v2.__base) and (v1.__index == v2.__index)
+    end
 end
 
 ---------------------------------------------------------------------
@@ -104,27 +127,11 @@ function array:set(n, v)
     end
 end
 
-function array:front()
-    return self.super:get(1)
+function array:first()
+    return __array_iterator:new(self.super, 1)
 end
 
-function array:back()
-    return self.super:get(self.super:size())
-end
-
-function array:head()
-    error("this function not implemented.")
-end
-
-function array:tail()
-    error("this function not implemented.")
-end
-
-function array:rhead()
-    error("this function not implemented.")
-end
-
-function array:rtail()
-    error("this function not implemented.")
+function array:rear()
+    return __array_iterator:new(self.super, self.super:size() + 1)
 end
 
