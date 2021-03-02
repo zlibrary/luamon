@@ -34,11 +34,19 @@ end
 local __array_iterator = newclass('luamon.container.__array_iterator')
 
 function __array_iterator(object, index)
-    self._object = object
-    self._index  = index
+    self.__object = object
+    self.__index  = index
 end
 
-function __array_iterater
+function __array_iterater:get()
+    return self.__object.__elems[self.__index]
+end
+
+function __array_iteratro:set(v)
+    self.__object.__elems[self.__index] = v
+end
+
+
 
 
 
