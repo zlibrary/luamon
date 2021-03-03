@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 --- A standard container for storing a fixed size sequence of elements.
 -------------------------------------------------------------------------------
-require "luamon.class"
+require "luamon"
 
 local tointeger = math.tointeger
 if (tointeger == nil) then
