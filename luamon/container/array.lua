@@ -25,7 +25,7 @@ function __array_base:init(n)
         self.__size  = nm
         self.__elems = {}
     else
-        error(string.format("'%s[%s]' is not valid argument for type 'unsigned int'.", n, type(n)))
+        error(string.format("'%s[%s]' is not valid argument for type 'unsigned int'.", tostring(n), type(n)))
     end
 end
 
@@ -45,39 +45,61 @@ end
 --- 'Array'迭代器
 local __array_iterator = newclass('luamon.container.__array_iterator')
 
-function __array_iterator(base, index)
-    self.__base  = base
-    self.__index = index
+function __array_iterator:init(obj, idx)
+    self.__obj = obj
+    self.__idx = idx
 end
 
 function __array_iterator:get()
-    return self.__base:get(self.__index)
+    return self.__obj:get(self.__idx)
 end
 
 function __array_iterator:set(v)
-    self.__base:set(self.__index, v)
+    self.__obj:set(self.__idx,v)
 end
 
 function __array_iterator:advance(n)
     local nm = tointeger(n)
     if (nm == nil) then
-        error(string.format("'%s[%s]' is not valid argument for type 'unsigned int'.", n, type(n)))
+        error(string.format("'%s[%s]' is not valid argument for type 'unsigned int'.", tostring(n), type(n)))
     else
-        self.__index = self.__index + nm
-        if (self.__index < 1) then
-            self.__index = 1
+        self.__idx = self.__idx + nm
+        if (self.__idx < 1) then
+            self.__idx = 1
         end
-        if (self.__index > self.__base:size()) then
-            self.__index = self.__base:size() + 1
+        if (self.__idx > self.__obj:size()) then
+            self.__idx = self.__obj:size() + 1
         end
     end
 end
 
-function __array_iterator:__eq(v1, v2)
-    if (v1.class() ~= __array_iterator) or  (v1.class() ~= v2.class()) then
+function __array_iterator:__eq(v)
+    if self.class() ~= v.class() then
         return false
     else
-        return (v1.__base == v2.__base) and (v1.__index == v2.__index)
+        return (self.__obj == v.__obj) and (self.__idx == v.__idx)
+    end
+end
+
+function __array_iterator:__add(n)
+    local nm = tointeger(n)
+    if nm and (nm > 0) then
+        local iterator = __array_iterator:new(self.__obj, self.__idx)
+        iterator:advance(nm)
+        return iterator
+    else
+        error(string.format("'%s[%s]' is not valid argument for type 'unsigned int'.", tostring(n), type(n)))
+    end
+end
+
+function __array_iterator:__sub(n)
+    local nm = tointeger(n)
+    if nm and (nm > 0) then
+        local iterator = __array_iterator:new(self.__obj, self.__idx)
+        iterator:advance(-nm)
+        return iterator
+    else
+        error(string.format("'%s[%s]' is not valid argument for type 'unsigned int'.", tostring(n), type(n)))
     end
 end
 
@@ -104,7 +126,7 @@ end
 function array:get(n)
     local nm = tointeger(n)
     if (nm == nil) then
-        error(string.format("'%s[%s]' is not valid argument for type 'unsigned int'.", n, type(n)))
+        error(string.format("'%s[%s]' is not valid argument for type 'unsigned int'.", tostring(n), type(n)))
     else
         if (nm <= 0) or (nm > self.super:size()) then
             error("out of range.")
@@ -117,7 +139,7 @@ end
 function array:set(n, v)
     local nm = tointeger(n)
     if (nm == nil) then
-        error(string.format("'%s[%s]' is not valid argument for type 'unsigned int'.", n, type(n)))
+        error(string.format("'%s[%s]' is not valid argument for type 'unsigned int'.", tostring(n), type(n)))
     else
         if (nm <= 0) or (nm > self.super:size()) then
             error("out of range.")
@@ -127,7 +149,7 @@ function array:set(n, v)
     end
 end
 
-function array:first()
+function array:front()
     return __array_iterator:new(self.super, 1)
 end
 
@@ -135,3 +157,4 @@ function array:rear()
     return __array_iterator:new(self.super, self.super:size() + 1)
 end
 
+return array

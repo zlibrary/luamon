@@ -409,7 +409,7 @@ function block:run()
         if (fixtures.setup ~= nil) then
             fixtures.setup(v.name)
         end
-        local ok, rvalue = pcall(v.fn)
+        local ok, rvalue = xpcall(v.fn, debug.traceback)
         if not ok then
             self.__failure_counts[v.name] = self.__failure_counts[v.name] + 1
             local errors = self.__failure_errors[v.name]
