@@ -68,14 +68,23 @@ end
 
 -------------------------------------------------------------------------------
 --- 数组定义
-local array = newclass("array", require("luamon.container.traits.container"))
+local array = newclass("array", require("luamon.container.traits.container_traits"))
 
 function array:init(n)
     self.super:init("sequential")
-    if (type(n) == "table") then
-        if 
-
-
+    if type(n) == "table" then
+        if (self.super.class().made(n) == true) then
+            assert(n.is_sequential(), string.format("'%s' isn't a sequential container.", tostring(n)))
+            self.__size  = n:size()
+            self.__elems = {}
+            algorithm.copy(n.front(), n.rear(), self.front())
+        else
+            self.__size  = #n
+            self.__elems = {}
+            for _, v in ipairs(n) do
+                tabble.insert(self.__elems, v)
+            end
+        end
     else
         local nm = math.tointeger(n)
         if nm and (nm >= 0) then
@@ -87,90 +96,58 @@ function array:init(n)
     end
 end
 
-
-
-
----------------------------------------------------------------------
---- 'Array'基础结构
-local __array_base = newclass('luamon.container.__array_base')
-
-function __array_base:init(n)
-    local nm = tointeger(n)
-    if nm and (nm >= 0) then
-        self.__size  = nm
-        self.__elems = {}
-    else
-        error(string.format("'%s[%s]' is not valid argument for type 'unsigned int'.", tostring(n), type(n)))
-    end
-end
-
-function __array_base:size()
+function array:capacity()
     return self.__size
 end
 
-function __array_base:get(n)
-    return self.__elems[n]
-end
-
-function __array_base:set(n, v)
-    self.__elems[n] = v
-end
-
-
-
-
----------------------------------------------------------------------
---- 'Array'定义
-local array = newclass('luamon.container.array', __array_base)
-
-function array:init(n)
-    self.super:init(n)
-end
-
 function array:size()
-    return self.super:size()
-end
-
-function array:capacity()
-    return self.super:size()
+    return self.__size
 end
 
 function array:empty()
-    return (self.super:size() == 0)
+    return self.__size == 0
 end
 
 function array:get(n)
-    local nm = tointeger(n)
-    if (nm == nil) then
-        error(string.format("'%s[%s]' is not valid argument for type 'unsigned int'.", tostring(n), type(n)))
-    else
-        if (nm <= 0) or (nm > self.super:size()) then
+    local nm = math.tointeger(n)
+    if nm then
+        if (nm <= 0) or (nm > self:size()) then
             error("out of range.")
         else
-            return self.super:get(nm)
+            return self.__elems[nm]
         end
+    else
+        error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
     end
 end
 
 function array:set(n, v)
-    local nm = tointeger(n)
-    if (nm == nil) then
-        error(string.format("'%s[%s]' is not valid argument for type 'unsigned int'.", tostring(n), type(n)))
-    else
-        if (nm <= 0) or (nm > self.super:size()) then
+    local nm = math.tointeger(n)
+    if nm then
+        if (nm <= 0) or (nm > self:size()) then
             error("out of range.")
         else
-            return self.super:set(nm, v)
+            self.__elems[nm] = v
         end
+    else
+        error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
     end
 end
 
+function array:first()
+    return self.front():get()
+end
+
+function array:last()
+    return (self.rear() - 1):get()
+end
+    
 function array:front()
-    return __array_iterator:new(self.super, 1)
+    return __array_iterator:new(self, 1)
 end
 
 function array:rear()
-    return __array_iterator:new(self.super, self.super:size() + 1)
+    return __array_iterator:new(self, self:size() + 1)
 end
 
 return array
