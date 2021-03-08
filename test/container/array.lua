@@ -10,9 +10,10 @@ local mytest = TestSuite.new()
 -- 构造测试
 function mytest.testA()
 
-    mytest:assert_true(Array:new(0)   ~= nil)
-    mytest:assert_true(Array:new(1)   ~= nil)
-    mytest:assert_true(Array:new(100) ~= nil)
+    mytest:assert_true(Array:new({1, 2}) ~= nil)
+    mytest:assert_true(Array:new(0)      ~= nil)
+    mytest:assert_true(Array:new(1)      ~= nil)
+    mytest:assert_true(Array:new(100)    ~= nil)
     
     mytest:assert_error(function() Array:new(nil) end)
     mytest:assert_error(function() Array:new(-1 ) end)

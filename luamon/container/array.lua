@@ -82,7 +82,7 @@ function array:init(n)
             self.__size  = #n
             self.__elems = {}
             for _, v in ipairs(n) do
-                tabble.insert(self.__elems, v)
+                table.insert(self.__elems, v)
             end
         end
     else
