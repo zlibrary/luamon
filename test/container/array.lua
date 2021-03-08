@@ -21,6 +21,18 @@ function mytest.testA()
     mytest:assert_error(function() Array:new(1.1) end)
     mytest:assert_error(function() Array:new("" ) end)
 
+    local myarray = Array:new({1, 2, 3})
+    mytest:assert_eq(myarray:size(), 3)
+    mytest:assert_eq(myarray:get(1), 1)
+    mytest:assert_eq(myarray:get(2), 2)
+    mytest:assert_eq(myarray:get(3), 3)
+
+    local myarr2  = Array:new(myarray)
+    mytest:assert_eq(myarr2:size(), 3)
+    mytest:assert_eq(myarr2:get(1), 1)
+    mytest:assert_eq(myarr2:get(2), 2)
+    mytest:assert_eq(myarr2:get(3), 3)
+
 end
 
 -- 迭代测试

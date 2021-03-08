@@ -73,11 +73,11 @@ local array = newclass("array", require("luamon.container.traits.container_trait
 function array:init(n)
     self.super:init("sequential")
     if type(n) == "table" then
-        if (self.super.class().made(n) == true) then
+        if (array:super():made(n) == true) then
             assert(n.is_sequential(), string.format("'%s' isn't a sequential container.", tostring(n)))
             self.__size  = n:size()
             self.__elems = {}
-            algorithm.copy(n.front(), n.rear(), self.front())
+            algorithm.copy(n:front(), n:rear(), self:front())
         else
             self.__size  = #n
             self.__elems = {}

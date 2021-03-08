@@ -20,3 +20,5 @@ function algorithm.fill(first, last, v)
         first:advance(1)
     end
 end
+
+return algorithm
