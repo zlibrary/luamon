@@ -2,18 +2,93 @@
 --- A standard container for storing a fixed size sequence of elements.
 -------------------------------------------------------------------------------
 require "luamon"
+local algorithm = require "luamon.container.algorithm"
 
-local tointeger = math.tointeger
-if (tointeger == nil) then
-    tointeger = function(n)
-        local i = tonumber(n)
-        if (i ~= nil) and (i == math.floor(i)) then
-            return i
-        else
-            return nil
+-------------------------------------------------------------------------------
+--- 迭代器（正向）
+local __array_iterator = newclass("__array_iterator")
+
+function __array_iterator:init(obj, idx)
+    self.__obj = obj
+    self.__idx = idx
+end
+
+function __array_iterator:get()
+    return self.__obj:get(self.__idx)
+end
+
+function __array_iterator:set(v)
+    self.__obj:set(self.__idx,v)
+end
+
+function __array_iterator:advance(n)
+    local nm = math.tointeger(n)
+    if (nm == nil) then
+        error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
+    else
+        self.__idx = self.__idx + nm
+        if (self.__idx < 1) then
+            self.__idx = 1
+        end
+        if (self.__idx > self.__obj:size()) then
+            self.__idx = self.__obj:size() + 1
         end
     end
 end
+
+function __array_iterator:__eq(other)
+    if self.class() ~= other.class() then
+        return false
+    else
+        return (self.__obj == other.__obj) and (self.__idx == other.__idx)
+    end
+end
+
+function __array_iterator:__add(n)
+    local nm = math.tointeger(n)
+    if nm and (nm > 0) then
+        local iterator = __array_iterator:new(self.__obj, self.__idx)
+        iterator:advance(nm)
+        return iterator
+    else
+        error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
+    end
+end
+
+function __array_iterator:__sub(n)
+    local nm = math.tointeger(n)
+    if nm and (nm > 0) then
+        local iterator = __array_iterator:new(self.__obj, self.__idx)
+        iterator:advance(-nm)
+        return iterator
+    else
+        error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
+    end
+end
+
+-------------------------------------------------------------------------------
+--- 数组定义
+local array = newclass("array", require("luamon.container.traits.container"))
+
+function array:init(n)
+    self.super:init("sequential")
+    if (type(n) == "table") then
+        if 
+
+
+    else
+        local nm = math.tointeger(n)
+        if nm and (nm >= 0) then
+            self.__size  = nm
+            self.__elems = {}
+        else
+            error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
+        end
+    end
+end
+
+
+
 
 ---------------------------------------------------------------------
 --- 'Array'基础结构
@@ -41,67 +116,8 @@ function __array_base:set(n, v)
     self.__elems[n] = v
 end
 
----------------------------------------------------------------------
---- 'Array'迭代器
-local __array_iterator = newclass('luamon.container.__array_iterator')
 
-function __array_iterator:init(obj, idx)
-    self.__obj = obj
-    self.__idx = idx
-end
 
-function __array_iterator:get()
-    return self.__obj:get(self.__idx)
-end
-
-function __array_iterator:set(v)
-    self.__obj:set(self.__idx,v)
-end
-
-function __array_iterator:advance(n)
-    local nm = tointeger(n)
-    if (nm == nil) then
-        error(string.format("'%s[%s]' is not valid argument for type 'unsigned int'.", tostring(n), type(n)))
-    else
-        self.__idx = self.__idx + nm
-        if (self.__idx < 1) then
-            self.__idx = 1
-        end
-        if (self.__idx > self.__obj:size()) then
-            self.__idx = self.__obj:size() + 1
-        end
-    end
-end
-
-function __array_iterator:__eq(v)
-    if self.class() ~= v.class() then
-        return false
-    else
-        return (self.__obj == v.__obj) and (self.__idx == v.__idx)
-    end
-end
-
-function __array_iterator:__add(n)
-    local nm = tointeger(n)
-    if nm and (nm > 0) then
-        local iterator = __array_iterator:new(self.__obj, self.__idx)
-        iterator:advance(nm)
-        return iterator
-    else
-        error(string.format("'%s[%s]' is not valid argument for type 'unsigned int'.", tostring(n), type(n)))
-    end
-end
-
-function __array_iterator:__sub(n)
-    local nm = tointeger(n)
-    if nm and (nm > 0) then
-        local iterator = __array_iterator:new(self.__obj, self.__idx)
-        iterator:advance(-nm)
-        return iterator
-    else
-        error(string.format("'%s[%s]' is not valid argument for type 'unsigned int'.", tostring(n), type(n)))
-    end
-end
 
 ---------------------------------------------------------------------
 --- 'Array'定义
