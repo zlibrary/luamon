@@ -82,8 +82,10 @@ function mytest.testA()
     mytest:assert_false(Animal:inherits(Animal))
     mytest:assert_false(Animal:inherits(Dog))
     mytest:assert_false(Animal:inherits(Cat))
+    mytest:assert_false(Cat:inherits(Cat))
     mytest:assert_false(Dog:inherits(Cat))
     mytest:assert_false(Dog:inherits(Human))
+    mytest:assert_false(LivingBeing:inherits(Human))
 
     -- 构建实例
     local Robert   = Human:new("Robert", 35, "London")
@@ -227,11 +229,6 @@ function mytest.testC()
 
     for i = 1, 10 do
         mytest:assert_eq(a:get(i), 'a' .. i)
-    end
-
-    print('\n')
-    for k, v in pairs(a) do
-        print(k, v)
     end
 
 end

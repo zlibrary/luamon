@@ -1,14 +1,15 @@
 -------------------------------------------------------------------------------
---- A standard container for storing a fixed size sequence of elements.
+--- 固定大小的序列容器，包含严格线性排列的特定数量元素.
 -------------------------------------------------------------------------------
 require "luamon"
 local algorithm = require "luamon.container.algorithm"
 
 -------------------------------------------------------------------------------
 --- 迭代器（正向）
-local __array_iterator = newclass("__array_iterator")
+local __array_iterator = newclass("__array_iterator", require("luamon.container.traits.iterator"))
 
 function __array_iterator:init(obj, idx)
+    self.super:init("random-access")
     self.__obj = obj
     self.__idx = idx
 end
@@ -26,27 +27,22 @@ function __array_iterator:advance(n)
     if (nm == nil) then
         error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
     else
-        self.__idx = self.__idx + nm
-        if (self.__idx < 1) then
-            self.__idx = 1
-        end
-        if (self.__idx > self.__obj:size()) then
-            self.__idx = self.__obj:size() + 1
+        local idx = self.__idx + nm
+        if (idx >= 1) and (idx <= (self.__obj:size() + 1)) then
+            self.__idx = idx
+        else
+            error("out of range.")
         end
     end
 end
 
 function __array_iterator:__eq(other)
-    if self.class() ~= other.class() then
-        return false
-    else
-        return (self.__obj == other.__obj) and (self.__idx == other.__idx)
-    end
+    return (self.class() == other.class()) and (self.__obj == other.__obj) and (self.__idx == other.__idx)
 end
 
 function __array_iterator:__add(n)
     local nm = math.tointeger(n)
-    if nm and (nm > 0) then
+    if nm and (nm >= 0) then
         local iterator = __array_iterator:new(self.__obj, self.__idx)
         iterator:advance(nm)
         return iterator
@@ -67,8 +63,24 @@ function __array_iterator:__sub(n)
 end
 
 -------------------------------------------------------------------------------
---- 数组定义
-local array = newclass("array", require("luamon.container.traits.container_traits"))
+--- 容器定义（定长数组）
+local array = newclass("array", require("luamon.container.traits.container"))
+
+function array:xbegin()
+    return __array_iterator:new(self, 1)
+end
+
+function array:xend()
+    return __array_iterator:new(self, self:size() + 1)
+end
+
+function array:rbegin()
+    error("this function not implemented!!!")
+end
+
+function array:rend()
+    error("this function not implemented!!!")
+end
 
 function array:init(n)
     self.super:init("sequential")
@@ -77,7 +89,7 @@ function array:init(n)
             assert(n.is_sequential(), string.format("'%s' isn't a sequential container.", tostring(n)))
             self.__size  = n:size()
             self.__elems = {}
-            algorithm.copy(n:front(), n:rear(), self:front())
+            algorithm.copy(n:xbegin(), n:xend(), self:xbegin())
         else
             self.__size  = #n
             self.__elems = {}
@@ -111,7 +123,7 @@ end
 function array:get(n)
     local nm = math.tointeger(n)
     if nm then
-        if (nm <= 0) or (nm > self:size()) then
+        if (nm < 1) or (nm > self:size()) then
             error("out of range.")
         else
             return self.__elems[nm]
@@ -124,7 +136,7 @@ end
 function array:set(n, v)
     local nm = math.tointeger(n)
     if nm then
-        if (nm <= 0) or (nm > self:size()) then
+        if (nm < 1) or (nm > self:size()) then
             error("out of range.")
         else
             self.__elems[nm] = v
@@ -134,20 +146,28 @@ function array:set(n, v)
     end
 end
 
-function array:first()
-    return self.front():get()
-end
-
-function array:last()
-    return (self.rear() - 1):get()
-end
-    
 function array:front()
-    return __array_iterator:new(self, 1)
+    if self:empty() then
+        return nil
+    else
+        return self.__elems[1]
+    end
 end
 
-function array:rear()
-    return __array_iterator:new(self, self:size() + 1)
+function array:back()
+    if self:empty() then
+        return nil
+    else
+        return self.__elems[self.__size]
+    end
+end
+
+function array:__len()
+    return self.__size
+end
+
+function array:__pairs()
+    return pairs(self.__elems)
 end
 
 return array
