@@ -167,7 +167,18 @@ function array:__len()
 end
 
 function array:__pairs()
-    return pairs(self.__elems)
+    local curr = self:xbegin()
+    local xend = self:xend()
+    return function()
+        if (curr == xend) then
+            return nil
+        else
+            local idx = curr.__idx
+            local val = curr:get()
+            curr:advance(1)
+            return idx, val
+        end
+    end
 end
 
 return array

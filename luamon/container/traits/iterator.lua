@@ -31,7 +31,7 @@ function iterator_traits:init(category)
     end
 end
 
-function iterator_traist:isa(category)
+function iterator_traits:isa(category)
     local c = iterator_traits.static.categorys[category]
     if (c == nil) then
         return false
