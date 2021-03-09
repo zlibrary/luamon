@@ -36,6 +36,18 @@ function __array_iterator:advance(n)
     end
 end
 
+function __array_iterator:prev()
+    local iterator = __array_iterator:new(self.__obj, self.__idx)
+    iterator:advance(-1)
+    return iterator
+end
+
+function __array_iterator:next()
+    local iterator = __array_iterator:new(self.__obj, self.__idx)
+    iterator:advance(1)
+    return iterator
+end
+
 function __array_iterator:__eq(other)
     return (self.class() == other.class()) and (self.__obj == other.__obj) and (self.__idx == other.__idx)
 end

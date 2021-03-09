@@ -10,12 +10,32 @@ local __iterator_tag_forward       = newclass("__iterator_tag_forward"      , __
 local __iterator_tag_bidirectional = newclass("__iterator_tag_bidirectional", __iterator_tag_forward      )
 local __iterator_tag_random        = newclass("__iterator_tag_random"       , __iterator_tag_bidirectional)
 
+function __iterator_tag_random:name()
+    return 'random-access'
+end
+
+function __iterator_tag_input:name()
+    return 'input'
+end
+
+function __iterator_tag_output:name()
+    return 'output'
+end
+
+function __iterator_tag_forward:name()
+    return 'forward'
+end
+
+function __iterator_tag_bidirectional:name()
+    return 'bidirectional'
+end
+
 -------------------------------------------------------------------------------
 local iterator_traits = newclass("iterator_traits")
 
 iterator_traits.categorys = 
 {
-    ['random-access'] = __iterator_tag_random,   
+    ['random-access'] = __iterator_tag_random,
     ['input'        ] = __iterator_tag_input,
     ['output'       ] = __iterator_tag_output,
     ['forward'      ] = __iterator_tag_forward,
