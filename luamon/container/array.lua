@@ -3,6 +3,7 @@
 -------------------------------------------------------------------------------
 require "luamon"
 local algorithm = require "luamon.container.algorithm"
+local iterator  = require "luamon.container.iterator"
 
 -------------------------------------------------------------------------------
 --- 迭代器（正向）
@@ -87,11 +88,11 @@ function array:xend()
 end
 
 function array:rbegin()
-    error("this function not implemented!!!")
+    return iterator:rbegin(self)
 end
 
 function array:rend()
-    error("this function not implemented!!!")
+    return iterator:rend(self)
 end
 
 function array:init(n)
