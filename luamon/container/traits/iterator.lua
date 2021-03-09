@@ -60,4 +60,8 @@ function iterator_traits:isa(category)
     end
 end
 
+function iterator_traits:name()
+    return self.__category.static:name()
+end
+
 return iterator_traits

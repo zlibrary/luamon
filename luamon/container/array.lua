@@ -66,7 +66,7 @@ end
 
 function __array_iterator:__sub(n)
     local nm = math.tointeger(n)
-    if nm and (nm > 0) then
+    if nm and (nm >= 0) then
         local iterator = __array_iterator:new(self.__obj, self.__idx)
         iterator:advance(-nm)
         return iterator

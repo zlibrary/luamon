@@ -3,6 +3,7 @@
 -------------------------------------------------------------------------------
 local TestSuite = require 'luamon.ltest'
 local Array     = require 'luamon.container.array'
+local Iterator  = require 'luamon.container.iterator'
 
 -- 构建测试实例
 local mytest = TestSuite.new()
@@ -98,6 +99,47 @@ function mytest.testB()
         mytest:assert_true(iter:isa("forward"))
         mytest:assert_true(iter:isa("bidirectional"))
         mytest:assert_false(iter:isa("output"))
+    end
+
+    do
+        local mytbl = { 1, 2, 3, 4, 5, 6 }
+        local iter1 = Iterator:xbegin(mytbl)
+        local iter2 = Iterator:xend(mytbl)
+        local count = 0
+        while(iter1 ~= iter2) do
+            count = count+1
+            mytest:assert_eq(iter1:get(), count)
+            iter1:advance(1)
+        end
+        mytest:assert_eq(count, 6)
+
+        local iter3 = Iterator:rbegin(mytbl)
+        local iter4 = Iterator:rend(mytbl)
+        mytest:assert_eq(iter3:get(), 6)
+        iter3:advance(1)
+        mytest:assert_eq(iter3:get(), 5)
+        iter3:advance(1)
+        mytest:assert_eq(iter3:get(), 4)
+        iter3:advance(1)
+        mytest:assert_eq(iter3:get(), 3)
+        iter3:advance(1)
+        mytest:assert_eq(iter3:get(), 2)
+        iter3:advance(1)
+        mytest:assert_eq(iter3:get(), 1)
+        iter3:advance(1)
+        mytest:assert_eq(iter3, iter4)
+    end
+
+    do
+        local myarray = Array:new({1, 2, 3, 4, 5})
+        local iter1   = myarray:rbegin()
+        local iter2   = myarray:rend()
+        mytest:assert_eq((iter1 + 0):get(), 5)
+        mytest:assert_eq((iter1 + 1):get(), 4)
+        mytest:assert_eq((iter1 + 2):get(), 3)
+        mytest:assert_eq((iter1 + 3):get(), 2)
+        mytest:assert_eq((iter1 + 4):get(), 1)
+        mytest:assert_eq((iter1 + 5), iter2  )
     end
 
 end

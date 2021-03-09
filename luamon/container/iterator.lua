@@ -147,9 +147,9 @@ end
 function iterator:rbegin(obj)
     if (type(obj) == "table") then
         if not container:made(obj) then
-            return reverse_iterator:new(table_iterator(obj, 1))
+            return reverse_iterator:new(table_iterator(obj, #obj + 1))
         else
-            return reverse_iterator:new(obj:xbegin())
+            return reverse_iterator:new(obj:xend())
         end
     else
         error(string.format("'%s[%s]' is not valid argument for type 'table'.", tostring(obj), type(obj)))
@@ -159,9 +159,9 @@ end
 function iterator:rend(obj)
     if (type(obj) == "table") then
         if not container:made(obj) then
-            return reverse_iterator:new(table_iterator(obj, #obj + 1))
+            return reverse_iterator:new(table_iterator(obj, 1))
         else
-            return reverse_iterator:new(obj:xend())
+            return reverse_iterator:new(obj:xbegin())
         end
     else
         error(string.format("'%s[%s]' is not valid argument for type 'table'.", tostring(obj), type(obj)))
