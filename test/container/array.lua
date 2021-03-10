@@ -197,4 +197,21 @@ function mytest.testC()
     end
 end
 
+-- 其他测试
+function mytest.testD()
+
+    do
+        local myarray = Array:new({1, 2, 3, 4, 5})
+        myarray:set(2, nil)
+        myarray:set(4, nil)
+        mytest:assert_eq(myarray:size(), 5)
+        mytest:assert_eq(myarray:get(1), 1)
+        mytest:assert_eq(myarray:get(2), nil)
+        mytest:assert_eq(myarray:get(3), 3)
+        mytest:assert_eq(myarray:get(4), nil)
+        mytest:assert_eq(myarray:get(5), 5)
+    end
+
+end
+
 mytest:run()
