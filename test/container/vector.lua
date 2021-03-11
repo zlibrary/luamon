@@ -258,6 +258,10 @@ function mytest.testC()
         mytest:assert_eq(myvector:back(), 2)
         mytest:assert_eq(myvector:get(2), 3)
 
+        -- {}
+        myvector:clear()
+        mytest:assert_eq(myvector:size(), 0)
+
     end
 end
 
