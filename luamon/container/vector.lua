@@ -19,23 +19,17 @@ function __vector_iterator:init(obj, idx)
 end
 
 function __vector_iterator:get()
-    local val = self.__obj:get(self.__idx)
-    if (val == __vector_nil_mock) then
-        return nil
-    else
-        return val
-    end
+    return self.__obj:get(self.__idx)
 end
 
 function __vector_iterator:set(v)
-    v = v or __vector_nil_mock
     self.__obj:set(self.__idx, v)
 end
 
 function __vector_iterator:advance(n)
     local nm = math.tointeger(n)
     if nm then
-        self.__idx = self._idx + nm
+        self.__idx = self.__idx + nm
     else
         error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
     end
@@ -92,13 +86,19 @@ function vector:rend()
 end
 
 function vector:init(obj)
+    self.super:init("sequential")
     obj = obj or {}
     if (type(obj) == "table") then
         self.__elems = {}
         if (vector:super():made(obj) == true) then
             assert(obj.is_sequential(), string.format("'%s' isn't sequential contianer.", tostring(obj)))
         end
-        algorithm.copy(iterator:xbegin(obj), iterator:xend(obj), self:xbegin())
+        local curr = iterator:xbegin(obj)
+        local last = iterator:xend(obj)
+        while(curr ~= last) do
+            table.insert(self.__elems, curr:get() or __vector_nil_mock)
+            curr:advance(1)
+        end
     else
         error(string.format("'%s[%s]' isn't valid argument for type 'table'.", tostring(obj), type(obj)))
     end
@@ -153,23 +153,89 @@ end
 function vector:set(n, v)
     local nm = math.tointeger(n)
     if nm then
-        local 
-        local val = self.__elems[nm]
-        if val == __vector_nil_mock then
-            return nil
+        if (nm > 0) and (nm <= self:size()) then
+            self.__elems[nm] = v or __vector_nil_mock
         else
-            return val
+            error("out of range.")
         end
     else
         error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
     end
 end
 
-  
-
-
-
-function __vector_iterator:set(v)
-    v = v or __vector_nil_mock
-    self.__obj:set(self.__idx, v)
+function vector:front()
+    return self:get(1)
 end
+
+function vector:back()
+    return self:get(self:size())
+end
+
+function vector:assign(obj)
+    obj = obj or {}
+    if (type(obj) == "table") then
+        self.__elems = {}
+        if (vector:super():made(obj) == true) then
+            assert(obj.is_sequential(), string.format("'%s' isn't sequential contianer.", tostring(obj)))
+        end
+        local curr = iterator:xbegin(obj)
+        local last = iterator:xend(obj)
+        while(curr ~= last) do
+            table.insert(self.__elems, curr:get() or __vector_nil_mock)
+            curr:advance(1)
+        end
+    else
+        error(string.format("'%s[%s]' isn't valid argument for type 'table'.", tostring(obj), type(obj)))
+    end
+end
+
+function vector:insert(pos, v)
+    if (pos.class() == __vector_iterator) then
+        table.insert(pos.__obj.__elems, pos.__idx, v or __vector_nil_mock)
+        return pos
+    else
+        error(string.format("'%s[%s]' is invalid argument for type 'iterator'.", tostring(pos), type(pos)))
+    end
+end
+
+function vector:erase(pos)
+    if (pos.class() == __vector_iterator) then
+        table.remove(pos.__obj.__elems, pos.__idx)
+        return pos
+    else
+        error(string.format("'%s[%s]' is invalid argument for type 'iterator'.", tostring(pos), type(pos)))
+    end
+end
+
+function vector:clear()
+    self.__elems = {}
+end
+
+function vector:push_back(v)
+    self:insert(self:xend(), v)
+end
+
+function vector:pop_back()
+    table.remove(self.__elems)
+end
+
+function vector:__len()
+    return self:size()
+end
+
+function vector:__pairs()
+    local curr = self:xbegin()
+    local xend = self:xend()
+    return function()
+        if (curr == xend) then
+            return nil
+        else
+            local idx = curr.__idx
+            local val = curr:get()
+            curr:advance(1)
+            return idx, val
+        end
+    end
+end
+
+return vector
