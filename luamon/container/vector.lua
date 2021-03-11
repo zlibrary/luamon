@@ -190,8 +190,8 @@ function vector:assign(obj)
 end
 
 function vector:insert(pos, v)
-    if (pos.class() == __vector_iterator) then
-        table.insert(pos.__obj.__elems, pos.__idx, v or __vector_nil_mock)
+    if (pos.class() == __vector_iterator) and (pos.__obj == self) then
+        table.insert(self.__elems, pos.__idx, v or __vector_nil_mock)
         return pos
     else
         error(string.format("'%s[%s]' is invalid argument for type 'iterator'.", tostring(pos), type(pos)))
@@ -199,8 +199,8 @@ function vector:insert(pos, v)
 end
 
 function vector:erase(pos)
-    if (pos.class() == __vector_iterator) then
-        table.remove(pos.__obj.__elems, pos.__idx)
+    if (pos.class() == __vector_iterator) and (pos.__obj == self) then
+        table.remove(self.__elems, pos.__idx)
         return pos
     else
         error(string.format("'%s[%s]' is invalid argument for type 'iterator'.", tostring(pos), type(pos)))
