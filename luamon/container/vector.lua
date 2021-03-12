@@ -43,6 +43,14 @@ function __vector_iterator:next()
     return __vector_iterator:new(self.__obj, (self.__idx + 1))
 end
 
+function __vector_iterator:distance(other)
+    if (other.class() == __vector_iterator) and (self.__obj == other.__obj) then
+        return other.__idx - self.__idx
+    else
+        error(string.format("'%s[%s]' not match for 'iterator:distance()'.", tostring(other), type(other)))
+    end
+end
+
 function __vector_iterator:__eq(other)
     return (self.class() == other.class()) and (self.__obj == other.__obj) and (self.__idx == other.__idx)
 end

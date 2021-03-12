@@ -49,6 +49,14 @@ function __array_iterator:next()
     return iterator
 end
 
+function __array_iterator:distance(other)
+    if (other.class() == __array_iterator) and (self.__obj == other.__obj) then
+        return other.__idx - self.__idx
+    else
+        error(string.format("'%s[%s]' not match for 'iterator:distance()'.", tostring(other), type(other)))
+    end
+end
+
 function __array_iterator:__eq(other)
     return (self.class() == other.class()) and (self.__obj == other.__obj) and (self.__idx == other.__idx)
 end

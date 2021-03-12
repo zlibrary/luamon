@@ -9,9 +9,9 @@ local iterator  = require "luamon.container.iterator"
 --- 迭代器（正向）
 local __list_iterator = newclass("__list_iterator", require("luamon.container.traits.iterator"))
 
-function __list_iterator:init(inst, node)
+function __list_iterator:init(obj, node)
     self.super:init("bidirectional")
-    self.__inst = inst
+    self.__obj  = obj
     self.__node = node
 end
 
@@ -44,21 +44,35 @@ function __list_iterator:advance(n)
 end
 
 function __list_iterator:prev()
-    return __list_iterator:new(self.__inst, self.__node[1])
+    return __list_iterator:new(self.__obj, self.__node[1])
 end
 
 function __list_iterator:next()
-    return __list_iterator:new(self.__inst, self.__node[2])
+    return __list_iterator:new(self.__obj, self.__node[2])
+end
+
+function __list_iterator:distance(other)
+    if (other.class() == __list_iterator) and (self.__obj == other.__obj) then
+        local c = self
+        local n = 0
+        while(c ~= other) do
+            n = n + 1
+            c = c + 1
+        end
+        return n
+    else
+        error(string.format("'%s[%s]' not match for 'iterator:distance()'.", tostring(other), type(other)))
+    end
 end
 
 function __list_iterator:__eq(other)
-    return (self.class() == other.class()) and (self.__inst == other.__inst) and (self.__node == other.__node)
+    return (self.class() == other.class()) and (self.__obj == other.__obj) and (self.__node == other.__node)
 end
 
 function __list_iterator:__add(n)
     local nm = math.tointeger(n)
     if nm and (nm >= 0) then
-        local iter = __list_iterator:new(self.__inst, self.__node)
+        local iter = __list_iterator:new(self.__obj, self.__node)
         iter:advance(n)
         return iter
     else
@@ -69,7 +83,7 @@ end
 function __list_iterator:__sub(n)
     local nm = math.tointeger(n)
     if nm and (nm >= 0) then
-        local iter = __list_iterator:new(self.__inst, self.__node)
+        local iter = __list_iterator:new(self.__obj, self.__node)
         iter:advance(-n)
         return iter
     else
@@ -181,7 +195,7 @@ function list:assign(obj)
 end
 
 function list:insert(pos, v)
-    if (pos.class() == __list_iterator) and (pos.__inst == self) then
+    if (pos.class() == __list_iterator) and (pos.__obj == self) then
         self.__size = self.__size + 1
         local node = 
         {
@@ -198,7 +212,7 @@ function list:insert(pos, v)
 end
 
 function list:erase(pos)
-    if (pos.class() == __list_iterator) and (pos.__inst == self) then
+    if (pos.class() == __list_iterator) and (pos.__obj == self) then
         if (pos == self:xend()) then
             return pos
         else

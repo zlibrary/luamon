@@ -112,6 +112,42 @@ function mytest.testB()
         mytest:assert_eq((iter1 + 5), iter2  )
     end
 
+    do
+        local mylist = List:new({})
+        local iter1  = mylist:xbegin()
+        local iter2  = mylist:xend()
+        mytest:assert_eq(iter1:distance(iter2), 0)
+        mytest:assert_eq(iter2:distance(iter1), 0)
+    end
+
+    do
+        local mylist = List:new({1, 2, 3, 4, 5})
+        local iter1  = mylist:xbegin()
+        local iter2  = mylist:xend()
+        mytest:assert_eq(iter1:distance(iter2), 5)
+        mytest:assert_eq(iter2:distance(iter1), 1)
+        iter1:advance(1)
+        mytest:assert_eq(iter1:distance(iter2), 4)
+        mytest:assert_eq(iter2:distance(iter1), 2)
+        iter2:advance(-1)
+        mytest:assert_eq(iter1:distance(iter2), 3)
+        mytest:assert_eq(iter2:distance(iter1), 3)
+    end
+
+    do
+        local mylist = List:new({1, 2, 3, 4, 5})
+        local iter1  = mylist:rbegin()
+        local iter2  = mylist:rend()
+        mytest:assert_eq(iter1:distance(iter2), 5)
+        mytest:assert_eq(iter2:distance(iter1), 1)
+        iter1:advance(1)
+        mytest:assert_eq(iter1:distance(iter2), 4)
+        mytest:assert_eq(iter2:distance(iter1), 2)
+        iter2:advance(-1)
+        mytest:assert_eq(iter1:distance(iter2), 3)
+        mytest:assert_eq(iter2:distance(iter1), 3)
+    end
+
 end
 
 -- 函数测试

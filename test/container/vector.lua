@@ -117,6 +117,42 @@ function mytest.testB()
         mytest:assert_eq((iter1 + 5), iter2  )
     end
 
+    do
+        local myvector = Vector:new({})
+        local iter1    = myvector:xbegin()
+        local iter2    = myvector:xend()
+        mytest:assert_eq(iter1:distance(iter2), 0)
+        mytest:assert_eq(iter2:distance(iter1), 0)
+    end
+
+    do
+        local myvector = Vector:new({1, 2, 3, 4, 5})
+        local iter1    = myvector:xbegin()
+        local iter2    = myvector:xend()
+        mytest:assert_eq(iter1:distance(iter2),  5)
+        mytest:assert_eq(iter2:distance(iter1), -5)
+        iter1:advance(1)
+        mytest:assert_eq(iter1:distance(iter2),  4)
+        mytest:assert_eq(iter2:distance(iter1), -4)
+        iter2:advance(-1)
+        mytest:assert_eq(iter1:distance(iter2),  3)
+        mytest:assert_eq(iter2:distance(iter1), -3)
+    end
+
+    do
+        local myvector = Vector:new({1, 2, 3, 4, 5})
+        local iter1    = myvector:rbegin()
+        local iter2    = myvector:rend()
+        mytest:assert_eq(iter1:distance(iter2),  5)
+        mytest:assert_eq(iter2:distance(iter1), -5)
+        iter1:advance(1)
+        mytest:assert_eq(iter1:distance(iter2),  4)
+        mytest:assert_eq(iter2:distance(iter1), -4)
+        iter2:advance(-1)
+        mytest:assert_eq(iter1:distance(iter2),  3)
+        mytest:assert_eq(iter2:distance(iter1), -3)
+    end
+
 end
 
 -- 函数测试

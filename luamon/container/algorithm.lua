@@ -6,12 +6,8 @@ require "luamon"
 -------------------------------------------------------------------------------
 local algorithm = {}
 
-function algorithm.foreach(first, last, pred)
-    while(first ~= last) do
-        local next = (first + 1)
-        pred(first)
-        first = next
-    end
+function algorithm.distance(first, last)
+    return first:distance(last)
 end
 
 function algorithm.copy(first, last, result)
