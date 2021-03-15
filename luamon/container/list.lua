@@ -73,7 +73,7 @@ function __list_iterator:__add(n)
     local nm = math.tointeger(n)
     if nm and (nm >= 0) then
         local iter = __list_iterator:new(self.__obj, self.__node)
-        iter:advance(n)
+        iter:advance(nm)
         return iter
     else
         error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
@@ -84,7 +84,7 @@ function __list_iterator:__sub(n)
     local nm = math.tointeger(n)
     if nm and (nm >= 0) then
         local iter = __list_iterator:new(self.__obj, self.__node)
-        iter:advance(-n)
+        iter:advance(-nm)
         return iter
     else
         error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
