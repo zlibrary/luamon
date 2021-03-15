@@ -41,19 +41,13 @@ function __deque_iterator:advance(n)
             cindex = __deque_section_length
         end
         if (nm < 0) then
-            local iter = self.__obj.__start
+            local iter = self.__obj:xbegin()
             if (mindex < iter.__midx) or ((mindex == iter.__midx) and (cindex < iter.__cidx)) then
-
-                
-
-                print("\n-----")
-                print(mindex, cindex, iter.__midx, iter.__cidx)
-
                 error("out of range.")
             end
         end
         if (nm > 0) then
-            local iter = self.__obj.__finish
+            local iter = self.__obj:xend()
             if (mindex > iter.__midx) or ((mindex == iter.__midx) and (cindex > iter.__cidx)) then
                 error("out of range.")
             end
@@ -133,11 +127,11 @@ local function __initialize_deque(deque, first, last)
 end
         
 function deque:xbegin()
-    return self.__start
+    return (self.__start  + 0)
 end
 
 function deque:xend()
-    return self.__finish
+    return (self.__finish + 0)
 end
 
 function deque:rbegin()
@@ -191,7 +185,7 @@ end
 function deque:get(n)
     local nm = math.tointeger(n)
     if nm then
-        return (self:xbegin() + nm):get()
+        return (self:xbegin() + nm - 1):get()
     else
         error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
     end
@@ -201,7 +195,7 @@ function deque:set(n, v)
     local nm = math.tointeger(n)
     if nm then
         if (nm > 0) and (nm <= self:size()) then
-            (self:xbegin() + nm):set(v)
+            (self:xbegin() + nm - 1):set(v)
         else
             error("out of range.")
         end
@@ -296,7 +290,7 @@ function deque:insert(pos, v)
             self:push_front(v)
             local iter = self:xbegin()
             while(true) do
-                if (iter == pos) then
+                if (iter == (pos - 1)) then
                     iter:set(v)
                     break
                 else
@@ -327,22 +321,34 @@ end
 
 function deque:erase(pos)
     if (pos.class() == __deque_iterator) and (pos.__obj == self) then
-        if (math.abs(self:xbegin():distance(pos)) <= math.abs(self:xend():distance(pos))) then
-            local iter = pos
-            while(iter ~= self:xbegin()) do
-                local prev = iter:prev()
-                iter:set(prev:get())
-                iter = prev
-            end
-            self:pop_front()
+        if pos == self:xend() then
+            return pos
         else
-            local iter = pos
-            while(iter ~= self:xend()) do
-                local prev = iter:prev()
-                iter:set(prev:get())
-                iter = prev
+            if (math.abs(self:xbegin():distance(pos)) <= math.abs(self:xend():distance(pos))) then
+                local iter = pos
+                while(true) do
+                    if (iter == self:xbegin()) then
+                        break
+                    else
+                        local prev = iter:prev()
+                        iter:set(prev:get())
+                        iter = prev
+                    end
+                end
+                self:pop_front()
+            else
+                local iter = pos
+                while(true) do
+                    next = iter:next()
+                    if (next == self:xend()) then
+                        break
+                    else
+                        iter:set(next:get())
+                    end
+                    iter = next
+                end
+                self:pop_back()
             end
-            self:pop_back()
         end
         return pos
     else
@@ -351,9 +357,9 @@ function deque:erase(pos)
 end
 
 function deque:clear()
-    deque.__sections = {[1] = {}}
-    deque.__start    = __deque_iterator:new(deque, 1, 1)
-    deque.__finish   = __deque_iterator:new(deque, 1, 1)
+    self.__sections = {[1] = {}}
+    self.__start    = __deque_iterator:new(self, 1, 1)
+    self.__finish   = __deque_iterator:new(self, 1, 1)
 end
 
 function deque:__len()
