@@ -60,15 +60,15 @@ function __deque_iterator:advance(n)
 end
 
 function __deque_iterator:prev()
-    local iter = __deque_iterator:new(self.__obj, self.__midx, self.__cidx)
-    iter:advance(-1)
-    return iter
+    local tmp = __deque_iterator:new(self.__obj, self.__midx, self.__cidx)
+    tmp:advance(-1)
+    return tmp
 end
 
 function __deque_iterator:next()
-    local iter = __deque_iterator:new(self.__obj, self.__midx, self.__cidx)
-    iter:advance(1)
-    return iter
+    local tmp = __deque_iterator:new(self.__obj, self.__midx, self.__cidx)
+    tmp:advance(1)
+    return tmp
 end
 
 function __deque_iterator:distance(other)
@@ -117,21 +117,22 @@ local deque = newclass("deque", require("luamon.container.traits.container"))
 
 local function __initialize_deque(deque, first, last)
     deque.__sections = {[1] = {}}
-    deque.__start    = __deque_iterator:new(deque, 1, 1)
-    deque.__finish   = __deque_iterator:new(deque, 1, 1)
+    deque.__head     = __deque_iterator:new(deque, 1, 1)
+    deque.__tail     = __deque_iterator:new(deque, 1, 1)
     while(first ~= last) do
-        deque:push_back(first:get())
+        local rvalue = first:get()
         first:advance(1)
+        deque:push_back(rvalue)
     end
     return deque
 end
         
 function deque:xbegin()
-    return (self.__start  + 0)
+    return (self.__head + 0)
 end
 
 function deque:xend()
-    return (self.__finish + 0)
+    return (self.__tail + 0)
 end
 
 function deque:rbegin()
@@ -199,7 +200,6 @@ function deque:set(n, v)
         else
             error("out of range.")
         end
-        (self:xbegin() + nm):set(v)
     else
         error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
     end
@@ -225,63 +225,55 @@ function deque:assign(obj)
 end
 
 function deque:push_front(v)
-    if (self.__start.__cidx == 1) then
-        local mindex = self.__start.__midx - 1
-        local cindex = __deque_section_length
+    local mindex = self.__head.__midx - 0
+    local cindex = self.__head.__cidx - 1
+    if (cindex == 0) then
+        mindex = self.__head.__midx - 1
+        cindex = __deque_section_length
         self.__sections[mindex] = {}
-        self.__start = __deque_iterator:new(self, mindex, cindex)
-    else
-        local mindex = self.__start.__midx - 0
-        local cindex = self.__start.__cidx - 1
-        self.__start = __deque_iterator:new(self, mindex, cindex)
     end
-    self.__start:set(v)
+    self.__head = __deque_iterator:new(self, mindex, cindex)
+    self.__head:set(v)
 end
 
 function deque:pop_front()
     if (self:size() == 0) then
         return 
     end
-    if (self.__start.__cidx == __deque_section_length) then
-        local mindex = self.__start.__midx + 1
-        local cindex = 1
-        self.__sections[self.__start.__midx] = nil
-        self.__start = __deque_iterator:new(self, mindex, cindex)
-    else
-        local mindex = self.__start.__midx + 0
-        local cindex = self.__start.__cidx + 1
-        self.__start = __deque_iterator:new(self, mindex, cindex)
+    local mindex = self.__head.__midx + 0
+    local cindex = self.__head.__cidx + 1
+    if (cindex > __deque_section_length) then
+        mindex = self.__head.__midx + 1
+        cindex = 1
+        self.__sections[mindex - 1] = {}
     end
+    self.__head = __deque_iterator:new(self, mindex, cindex)
 end
 
 function deque:push_back(v)
-    self.__finish:set(v)
-    if (self.__finish.__cidx == __deque_section_length) then
-        local mindex = self.__finish.__midx + 1
-        local cindex = 1
+    self.__tail:set(v)
+    local mindex = self.__tail.__midx + 0
+    local cindex = self.__tail.__cidx + 1
+    if (cindex > __deque_section_length) then
+        mindex = self.__tail.__midx + 1
+        cindex = 1
         self.__sections[mindex] = {}
-        self.__finish = __deque_iterator:new(self, mindex, cindex)
-    else
-        local mindex = self.__finish.__midx + 0
-        local cindex = self.__finish.__cidx + 1
-        self.__finish = __deque_iterator:new(self, mindex, cindex)
     end
+    self.__tail = __deque_iterator:new(self, mindex, cindex)
 end
 
 function deque:pop_back()
     if (self:size() == 0) then
         return 
     end
-    if (self.__finish.__cidx == 1) then
-        local mindex = self.__finish.__midx - 1
-        local cindex = __deque_section_length
-        self.__sections[self.__finish.__midx] = nil
-        self.__finish = __deque_iterator:new(self, mindex, cindex)
-    else
-        local mindex = self.__finish.__midx - 0
-        local cindex = self.__finish.__cidx - 1
-        self.__finish = __deque_iterator:new(self, mindex, cindex)
+    local mindex = self.__tail.__midx - 0
+    local cindex = self.__tail.__cidx - 1
+    if (cindex == 0) then
+        mindex = self.__tail.__midx - 1
+        cindex = __deque_section_length
+        self.__sections[mindex + 1] = nil
     end
+    self.__tail = __deque_iterator:new(self, mindex, cindex)
 end
 
 function deque:insert(pos, v)
@@ -299,6 +291,7 @@ function deque:insert(pos, v)
                     iter = next
                 end
             end
+            return iter
         else
             self:push_back(v)
             local iter = self:xend() - 1
@@ -312,8 +305,8 @@ function deque:insert(pos, v)
                     iter = prev
                 end
             end
+            return iter
         end
-        return pos
     else
         error(string.format("'%s[%s]' is invalid argument for type 'iterator'.", tostring(pos), type(pos)))
     end
@@ -321,36 +314,36 @@ end
 
 function deque:erase(pos)
     if (pos.class() == __deque_iterator) and (pos.__obj == self) then
-        if pos == self:xend() then
+        if (pos == self:xend()) then
             return pos
-        else
-            if (math.abs(self:xbegin():distance(pos)) <= math.abs(self:xend():distance(pos))) then
-                local iter = pos
-                while(true) do
-                    if (iter == self:xbegin()) then
-                        break
-                    else
-                        local prev = iter:prev()
-                        iter:set(prev:get())
-                        iter = prev
-                    end
+        end
+        if (math.abs(self:xbegin():distance(pos)) <= math.abs(self:xend():distance(pos))) then
+            local iter = pos
+            while(true) do
+                if (iter == self:xbegin()) then
+                    break
+                else
+                    local prev = iter:prev()
+                    iter:set(prev:get())
+                    iter = prev
                 end
-                self:pop_front()
-            else
-                local iter = pos
-                while(true) do
-                    next = iter:next()
-                    if (next == self:xend()) then
-                        break
-                    else
-                        iter:set(next:get())
-                    end
+            end
+            self:pop_front()
+            return (pos + 1)
+        else
+            local iter = pos
+            while(true) do
+                local next = iter:next()
+                if (next == self:xend()) then
+                    break
+                else
+                    iter:set(next:get())
                     iter = next
                 end
-                self:pop_back()
             end
+            self:pop_back()
+            return (pos + 0)
         end
-        return pos
     else
         error(string.format("'%s[%s]' is invalid argument for type 'iterator'.", tostring(pos), type(pos)))
     end
@@ -358,8 +351,8 @@ end
 
 function deque:clear()
     self.__sections = {[1] = {}}
-    self.__start    = __deque_iterator:new(self, 1, 1)
-    self.__finish   = __deque_iterator:new(self, 1, 1)
+    self.__head = __deque_iterator:new(self, 1, 1)
+    self.__tail = __deque_iterator:new(self, 1, 1)
 end
 
 function deque:__len()
