@@ -25,4 +25,24 @@ function algorithm.fill(first, last, v)
     end
 end
 
+
+function algorithm.make_heap(first, last)
+    assert(first:isa("random-access"))
+    assert(last :isa("random-access"))
+    local length = first:distance(last)
+    if (length < 2) then
+        return
+    end
+    
+
+    local parent = length
+
+
+    if (first:distance(last) < 2) then
+        return
+    end
+end
+
+
+
 return algorithm
