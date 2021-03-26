@@ -91,6 +91,14 @@ function mytest.testA()
 
     do
         local mytree = RBTree:new()
+        mytest:assert_eq(mytree:size(), 0)
+        mytest:assert_true(is_sequential(mytree, "unique"))
+        mytest:assert_true(is_sequential(mytree))
+        mytest:assert_true(is_rbtree(mytree))
+    end
+
+    do
+        local mytree = RBTree:new()
         for i = 1, 20 do
             mytree:insert_unique(i)
         end
@@ -177,6 +185,45 @@ function mytest.testA()
         mytest:assert_false(is_sequential(mytree, "unique"))
         mytest:assert_true (is_sequential(mytree))
         mytest:assert_true(is_rbtree(mytree))
+    end
+end
+
+-- 边界测试
+function mytest.testB()
+    do
+        local mytree = RBTree:new()
+        mytest:assert_eq(mytree:lower_bound(3), mytree:xend())
+        mytest:assert_eq(mytree:upper_bound(3), mytree:xend())
+        mytest:assert_eq(mytree:equal_count(3), 0)
+
+        mytree:insert_equal(3)
+        for i = 1, 20 do
+            mytree:insert_equal(i)
+        end
+        mytree:insert_equal(3)
+        mytree:insert_equal(3)
+        local lv = mytree:lower_bound(3)
+        local uv = mytree:upper_bound(3)
+        mytest:assert_ne((uv + 0):get(), 3)
+        mytest:assert_eq((uv - 1):get(), 3)
+        mytest:assert_ne((lv - 1):get(), 3)
+        mytest:assert_eq((lv + 0):get(), 3)
+        mytest:assert_eq((lv + 1):get(), 3)
+        mytest:assert_eq((lv + 2):get(), 3)
+        mytest:assert_eq(mytree:equal_count(3), 4)
+        mytest:assert_eq(mytree:find(99), mytree:xend())
+        mytest:assert_ne(mytree:find(20), mytree:xend())
+
+        mytest:assert_error(function()
+            mytest:xend():distance(mytest:xbegin())
+        end)
+
+        mytest:assert_error(function()
+            mytest:xend():distance(mytest:xbegin())
+        end)
+
+        mytest:assert_eq(mytree:xbegin():distance(mytree:xend()), 23)
+
     end
 end
 

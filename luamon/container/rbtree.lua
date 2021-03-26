@@ -106,7 +106,24 @@ function __rbtree_iterator:next()
 end
 
 function __rbtree_iterator:distance(other)
-    error("this function is unsupported.")
+    if (other.class() == __rbtree_iterator) and (self.inst == other.inst) then
+        local e = self.inst:xend()
+        local c = self
+        local n = 0
+        while(true) do
+            if (c == other) then
+                return n
+            end
+            if (c == e) then
+                error("iterator:distance() overflow.")
+            else
+                n = n + 1
+                c = c + 1
+            end
+        end
+    else
+        error(string.format("'%s[%s]' not match for 'iterator:distance()'.", tostring(other), type(other)))
+    end
 end
 
 function __rbtree_iterator:__eq(other)
@@ -384,21 +401,56 @@ function rbtree:earse(position)
 end
 
 function rbtree:clear()
+    self.count = 0
+    self.header.parent = nil
+    self.header.lchild = self.header
+    self.header.rchild = self.header
 end
 
 function rbtree:find(k)
+    local j = self:lower_bound(k)
+    local e = self:xend()
+    if (j == e) or (self.kcompare(k, self.kextract(j:get()))) then
+        return e
+    else
+        return j
+    end
 end
 
-function rbtree:count(k)
+function rbtree:lower_bound(k)
+    local x = self.header.parent
+    local y = self.header
+    while(x ~= nil) do
+        if (not self.kcompare(self.kextract(x.value), k)) then
+            y = x
+            x = x.lchild
+        else
+            x = x.rchild
+        end
+    end
+    return __rbtree_iterator:new(self, y)
 end
 
-function rbtree:lower(k)
+function rbtree:upper_bound(k)
+    local x = self.header.parent
+    local y = self.header
+    while(x ~= nil) do
+        if self.kcompare(k, self.kextract(x.value)) then
+            y = x
+            x = x.lchild
+        else
+            x = x.rchild
+        end
+    end
+    return __rbtree_iterator:new(self, y)
 end
 
-function rbtree:upper(k)
+function rbtree:equal_range(k)
+    return { self:lower_bound(k), self:upper_bound(k) }
 end
 
-function rbtree:range(k)
+function rbtree:equal_count(k)
+    return algorithm.distance(self:lower_bound(k), self:upper_bound(k))
 end
 
 function rbtree:insert_unique(v)
