@@ -176,6 +176,20 @@ local function __rbtree_maximum(x)
     return x.header.rchild
 end
 
+local function __rbnode_minimum(x)
+    while(x.lchild) do
+        x = x.lchild
+    end
+    return x
+end
+
+local function __rbnode_maximum(x)
+    while(x.rchild) do
+        x = x.rchild
+    end
+    return x
+end
+
 local function __rbtree_rotate_l(this, x)
     local y  = x.rchild
     x.rchild = y.lchild
@@ -337,6 +351,91 @@ local function __rbtree_insert_aux(this, p, v)
     this.header.parent.color = __rbtree_color_black
     this.count = this.count + 1
     return x
+end
+
+local function __rbtree_erase_aux(this, z)
+    -- 节点移除操作
+    local y = z
+    local x = nil
+    local p = nil
+    if (y.lchild == nil) or (y.rchild == nil) then
+        -- 'z'节点最多存在一个子节点(可以直接移除)
+        x = (y.lchild == nil) and y.rchild or y.lchild
+    else
+        -- 'z'节点同时存在左右子节点(查找后继节点)
+        y = y.rchild
+        while(y.lchild) do
+            y = y.lchild
+        end
+        x = y.rchild
+    end
+    -- 'y'指向要删除的节点(可能是'z', 也可能是'z'的后继节点)
+    -- 'y'最多存在一个子节点, 'x'则指向可能存在的子节点
+    if (y ~= z) then
+        -- 'y'是'z'的后继(需要交换位置)
+        z.lchild.parent = y
+        y.lchild = z.lchild
+        if (y ~= z.rchild) then
+            p = y.parent -- 记录'y'的父节点
+            if (x ~= nil) then
+                x.parent = p
+            end
+            p.lchild = x
+            y.rchild = z.rchild
+            z.rchild.parent = y
+        else
+            p = y
+        end
+        if (this.header.parent == z) then
+            this.header.parent = y
+        else
+            if (z.parent.lchild == z) then
+                z.parent.lchild = y
+            else
+                z.parent.rchild = y
+            end
+        end
+        y.parent = z.parent
+        y.color, z.color = z.color, y.color
+        y = z
+    else
+        p = y.parent
+        if (x ~= nil) then
+            x.parent = p
+        end
+        if (this.header.parent == z) then
+            this.header.paretn = x
+        else
+            if (p.lchild == z) then
+                p.lchild = x
+            else
+                p.rchild = x
+            end
+        end
+        -- 更新最大/最小元素(上一分支无需处理,因为'z'肯定不是)
+        if (this.header.lchild == z) then
+            if (z.rchild == nil) then
+                this.header.lchild = z.parent
+            else
+                this.header.lchild = __rbnode_minimum(x)
+            end
+        end
+        if (this.header.rchild == z) then
+            if (z.lchild == nil) then
+                this.header.rchild = z.parent
+            else
+                this.header.rchild = __rbnode_maximum(x)
+            end
+        end
+    end
+    -- 'y'已经移除的节点
+    -- 'p'父节点
+    -- 'x'可能存在的子节点
+
+
+
+
+
 end
 
 -------------------------------------------------------------------------------
