@@ -666,4 +666,25 @@ function rbtree:insert_equal(v)
     return __rbtree_iterator:new(self, __rbtree_insert_aux(self, r[2], v))
 end
 
+function rbtree:__len()
+    return self:size()
+end
+
+function rbtree:__pairs()
+    local curr  = self:xbegin()
+    local xend  = self:xend()
+    local index = 0
+    local value = nil
+    return function()
+        if (curr == xend) then
+            return nil
+        else
+            value = curr:get()
+            index = index + 1
+            curr:advance(1)
+            return index, value
+        end
+    end
+end
+
 return rbtree
