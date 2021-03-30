@@ -227,4 +227,154 @@ function mytest.testB()
     end
 end
 
+-- 移除测试
+function mytest.testC()
+
+    do
+        local mytree = RBTree:new()
+        for i = 1, 20 do
+            mytree:insert_unique(i)
+        end
+        mytest:assert_eq(mytree:size(), 20)
+
+        for i = 5, 14 do
+            local iter = mytree:find(i)
+            mytree:erase(iter)
+            mytest:assert_true(is_sequential(mytree, "unique"))
+            mytest:assert_true(is_rbtree(mytree))
+        end
+        mytest:assert_eq(mytree:size(), 10)
+    end
+
+
+    do
+        local mytree = RBTree:new()
+        for _, v in ipairs({45, 67, 12, 34, 56, 41, 75, 89, 13, 26, 62, 14, 15, 61, 64, 42, 47, 49, 50, 70}) do
+            mytree:insert_unique(v)
+        end
+        mytest:assert_eq(mytree:size(), 20)
+        mytest:assert_true(is_sequential(mytree, "unique"))
+        mytest:assert_true(is_rbtree(mytree))
+
+        local iter = mytree:xbegin()
+        mytree:erase(iter)
+
+        local iter = mytree:find(13)
+        mytree:erase(iter)
+
+        local iter = mytree:find(61)
+        mytree:erase(iter)
+
+        local iter = mytree:find(41)
+        mytree:erase(iter)
+
+        local iter = mytree:find(15)
+        mytree:erase(iter)
+
+        local iter = mytree:find(75)
+        mytree:erase(iter)
+
+        mytest:assert_eq(mytree:size(), 14)
+        mytest:assert_true(is_sequential(mytree, "unique"))
+        mytest:assert_true(is_rbtree(mytree))
+
+        local iter = mytree:xbegin()
+        mytest:assert_eq(iter:get(), 14)
+        iter:advance(1)
+        mytest:assert_eq(iter:get(), 26)
+        iter:advance(1)
+        mytest:assert_eq(iter:get(), 34)
+        iter:advance(1)
+        mytest:assert_eq(iter:get(), 42)
+        iter:advance(1)
+        mytest:assert_eq(iter:get(), 45)
+    end
+
+    do
+        local mytree = RBTree:new()
+        for _, v in ipairs({45, 67, 12, 34, 56, 47, 75, 89, 13, 26, 62, 14, 15, 61, 64, 42, 47, 49, 50, 12}) do
+            mytree:insert_equal(v)
+        end
+        mytest:assert_eq(mytree:size(), 20)
+        mytest:assert_false(is_sequential(mytree, "unique"))
+        mytest:assert_true (is_sequential(mytree          ))
+        mytest:assert_true (is_rbtree(mytree))
+
+        local iter = mytree:find(12)
+        mytree:erase(iter)
+
+        local iter = mytree:find(61)
+        mytree:erase(iter)
+
+        local iter = mytree:find(34)
+        mytree:erase(iter)
+
+        local iter = mytree:find(15)
+        mytree:erase(iter)
+        mytest:assert_eq(mytree:size(), 16)
+        mytest:assert_false(is_sequential(mytree, "unique"))
+        mytest:assert_true (is_sequential(mytree          ))
+        mytest:assert_true (is_rbtree(mytree))
+
+        local iter = mytree:xbegin()
+        mytest:assert_eq(iter:get(), 12)
+        iter:advance(1)
+        mytest:assert_eq(iter:get(), 13)
+        iter:advance(1)
+        mytest:assert_eq(iter:get(), 14)
+        iter:advance(1)
+        mytest:assert_eq(iter:get(), 26)
+        iter:advance(1)
+        mytest:assert_eq(iter:get(), 42)
+        iter:advance(1)
+        mytest:assert_eq(iter:get(), 45)
+    end
+
+    do
+        local mytree = RBTree:new()
+        for _, v in ipairs({7121,3053,6114,2044,6126,5107,2047,6142,3075,7173,4108,9239,516,1032,7209,520,9319,1042,6218,6222,8368,526,6246,5235,1056,5243,7293,2116,5267,5271,7321,6302,3157,535,5299,7353,3169,9615,1079,7385,4320,6378,6386,1088,6394,9727,7437,4376,2192,1098,8776,4396,8800,2210,7497,2218,2220,8872,1113,2226,6498,7525,3257,9951,561,4480,2244,9999,5523,7573,6554,1130,1133,7597,3297,2276,9096,7637,6618,2290,1147,3319,3329,2310,4620,581,7713,146,8289,7733,6718,7757,588,8361,6746,295,3383,9432,6008,6778}) do
+            mytree:insert_unique(v)
+        end
+        mytest:assert_eq(mytree:size(), 100)
+        mytest:assert_true(is_sequential(mytree, "unique"))
+        mytest:assert_true(is_rbtree(mytree))
+
+        local count = 0
+        for _, v in ipairs({7121,6114,6126,5107,6142,3075,4108,516,1032,520,9319,6218,8368,1056,5243,5267,5271,7321,3157,9615,1079,7385,6378,1088,6394,2192,1098,4396,8800,7497,2220,8872,2226,3257,9951,561,4480,5523,7573,7597,3297,2276,9096,3319,3329,2310,8289,7733,6718,6746,295,3383,9432,6008,6778}) do
+            local iter = mytree:find(v)
+            if iter ~= mytree:xend() then
+                count = count + 1
+                mytree:erase(iter)
+            end
+        end
+        mytest:assert_eq(mytree:size(), 100 - count)
+        mytest:assert_true(is_sequential(mytree, "unique"))
+        mytest:assert_true(is_rbtree(mytree))
+    end
+
+    do
+        local mytree = RBTree:new()
+        for _, v in ipairs({137,192,215,138,162,2,81,58,208,133,71,196,66,105,154,128,103,16,29,242,263,296,156,85,54,108,132,256,205,236,116,42,128,31,180,290,33,260,48,240,94,119,137,160,223,291,287,27,7,16,269,269,12,126,55,66,233,187,23,138,123,138,180,250,169,61,241,202,22,288,143,115,108,279,275,31,270,262,58,276,278,27,246,290,153,2,57,86,188,79,224,11,216,105,261,86,166,202,287,187}) do
+            mytree:insert_equal(v)
+        end
+        mytest:assert_eq(mytree:size(), 100)
+        mytest:assert_false(is_sequential(mytree, "unique"))
+        mytest:assert_true (is_sequential(mytree))
+        mytest:assert_true(is_rbtree(mytree))
+
+        local count = 0
+        for _, v in ipairs({137,192,133,105,154,128,242,263,296,156,85,132,256,205,128,31,33,260,48,240,94,119,137,160,223,291,287,27,126,55,66,233,187,23,138,123,169,61,241,202,22,288,143,115,108,262,58,276,278,27,246,290,153,2,57,86,188,79,224,11,261,202,287,187}) do
+            local iter = mytree:find(v)
+            if iter ~= mytree:xend() then
+                count = count + 1
+                mytree:erase(iter)
+            end
+        end
+        mytest:assert_eq(mytree:size(), 100 - count)
+        mytest:assert_false(is_sequential(mytree, "unique"))
+        mytest:assert_true (is_sequential(mytree))
+        mytest:assert_true(is_rbtree(mytree))
+    end
+end
+
 mytest:run()

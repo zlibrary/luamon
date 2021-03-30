@@ -1,5 +1,10 @@
 -------------------------------------------------------------------------------
 --- 红黑树， 被设计作为关联容器的底层组件。
+--- 红黑树的构成规则
+--- 1. 每个节点不是红色就是黑色
+--- 2. 根总是黑色
+--- 3. 相邻的节点不能同时为红色
+--- 4. 任意节点到可达外部节点的路径包含相同数目的黑色节点
 -------------------------------------------------------------------------------
 require "luamon"
 local algorithm = require "luamon.container.algorithm"
@@ -431,11 +436,98 @@ local function __rbtree_erase_aux(this, z)
     -- 'y'已经移除的节点
     -- 'p'父节点
     -- 'x'可能存在的子节点
-
-
-
-
-
+    if (y.color == __rbtree_color_black) then
+        while(true) do
+            if (x == this.header.parent) then
+                break -- 'x'为根节点（即'y'为根节点，且仅有一个孩子'x'）， 仅需将'x'染黑即可
+            end
+            if (x ~= nil) and (x.color == __rbtree_color_red) then
+                break -- 'x'存在且为红色，仅需将'x'染黑即可
+            end
+            if (x == p.lchild) then
+                local s = p.rchild
+                if (s.color == __rbtree_color_red) then
+                    -- 'BB-3'转换为'BB-1'
+                    -- 'x' = 任意
+                    -- 'p' = 黑色
+                    -- 's' = 红色
+                    s.color = __rbtree_color_black
+                    p.color = __rbtree_color_red
+                    __rbtree_rotate_l(this, p)
+                    s = p.rchild
+                end
+                if ((s.lchild == nil) or (s.lchild.color == __rbtree_color_black)) and
+                   ((s.rchild == nil) or (s.rchild.color == __rbtree_color_black)) then
+                    -- 'BB-2' : 调整'p'树平衡（高度降低，需要向上传递）
+                    -- 'p' = 任意颜色
+                    -- 'x' = 任意颜色
+                    -- 's' = 黑色，且两个孩子均不是红色
+                    s.color = __rbtree_color_red
+                    x = p
+                    p = x.parent
+                else
+                    if (s.rchild == nil) or (s.rchild.color == __rbtree_color_black) then
+                        -- 'BB-1B' : 转换为'BB-1A'
+                        s.lchild.color = __rbtree_color_black
+                        s.color = __rbtree_color_red
+                        __rbtree_rotate_r(this, s)
+                        s = p.rchild
+                    end
+                    -- 'BB-1A' : 调整'p'树平衡（高度不变，无需向上传递）
+                    s.color = p.color
+                    p.color = __rbtree_color_black
+                    if (s.rchild ~= nil) then
+                        s.rchild.color = __rbtree_color_black
+                    end
+                    __rbtree_rotate_l(this, p)
+                    break
+                end
+            else
+                local s = p.lchild
+                if (s.color == __rbtree_color_red) then
+                    -- 'BB-3'转换为'BB-1'
+                    -- 'x' = 任意
+                    -- 'p' = 黑色
+                    -- 's' = 红色
+                    s.color = __rbtree_color_black
+                    p.color = __rbtree_color_red
+                    __rbtree_rotate_r(this, p)
+                    s = p.lchild
+                end
+                if ((s.lchild == nil) or (s.lchild.color == __rbtree_color_black)) and
+                   ((s.rchild == nil) or (s.rchild.color == __rbtree_color_black)) then
+                    -- 'BB-2' : 调整'p'树平衡（高度降低，需要向上传递）
+                    -- 'p' = 任意颜色
+                    -- 'x' = 任意颜色
+                    -- 's' = 黑色，且两个孩子均不是红色
+                    s.color = __rbtree_color_red
+                    x = p
+                    p = x.parent
+                else
+                    if (s.lchild == nil) or (s.lchild.color == __rbtree_color_black) then
+                        -- 'BB-1B' : 转换为'BB-1A'
+                        s.rchild.color = __rbtree_color_black
+                        s.color = __rbtree_color_red
+                        __rbtree_rotate_l(this, s)
+                        s = p.lchild
+                    end
+                    -- 'BB-1A' : 调整'p'树平衡（高度不变，无需向上传递）
+                    s.color = p.color
+                    p.color = __rbtree_color_black
+                    if (s.lchild ~= nil) then
+                        s.lchild.color = __rbtree_color_black
+                    end
+                    __rbtree_rotate_r(this, p)
+                    break
+                end
+            end
+        end
+        if (x ~= nil) then
+            x.color = __rbtree_color_black
+        end
+    end
+    this.count = this.count - 1
+    return y
 end
 
 -------------------------------------------------------------------------------
@@ -496,7 +588,12 @@ function rbtree:capacity()
     return 0x7FFFFFFF
 end
 
-function rbtree:earse(position)
+function rbtree:erase(pos)
+    if (pos.class() == __rbtree_iterator) and (pos.inst == self) then
+        __rbtree_erase_aux(self, pos.node)
+    else
+        error(string.format("'%s[%s]' not match for 'rbtree:erase()'.", tostring(pos), type(pos)))
+    end
 end
 
 function rbtree:clear()
