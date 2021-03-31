@@ -249,21 +249,21 @@ local function __rbtree_get_insert_unique_pos(this, k)
         end
     end
     local j = __rbtree_iterator:new(this, y)
-    -- if c then
-    --     -- 新键值作为'j'的左孩子插入
-    --     if (this:xbegin() == j) then
-    --         -- 'y'是首节点（无需后退检查是否存在重复键值）
-    --         return {x, y}
-    --     else
-    --         -- 'y'非首节点（需要后退检查是否存在重复键值）
-    --         j:decrement()
-    --     end
-    -- end
-    -- if (this.kcompare(this.kextract(j:get()), k)) then
-    --     return {x, y} -- 没有重复键值
-    -- else
-    --     return {j.__node, nil}
-    -- end
+    if c then
+        -- 新键值作为'j'的左孩子插入
+        if (this:xbegin() == j) then
+            -- 'y'是首节点（无需后退检查是否存在重复键值）
+            return {x, y}
+        else
+            -- 'y'非首节点（需要后退检查是否存在重复键值）
+            j:decrement()
+        end
+    end
+    if (this.kcompare(this.kextract(j:get()), k)) then
+        return {x, y} -- 没有重复键值
+    else
+        return {j.__node, nil}
+    end
 end
 
 local function __rbtree_get_insert_equal_pos(this, k)
@@ -655,14 +655,14 @@ end
 
 function rbtree:insert_unique(v)
     local r = __rbtree_get_insert_unique_pos(self, self.kextract(v))
-    -- local e = r[1]
-    -- local p = r[2]
-    -- if (p ~= nil) then
-    --     local z = __rbtree_insert_aux(self, p, v)
-    --     return {__rbtree_iterator:new(self, z), true }
-    -- else
-    --     return {__rbtree_iterator:new(self, e), false}
-    -- end
+    local e = r[1]
+    local p = r[2]
+    if (p ~= nil) then
+        local z = __rbtree_insert_aux(self, p, v)
+        return {__rbtree_iterator:new(self, z), true }
+    else
+        return {__rbtree_iterator:new(self, e), false}
+    end
 end
 
 function rbtree:insert_equal(v)
