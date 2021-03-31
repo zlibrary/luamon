@@ -50,27 +50,77 @@ function map:capacity()
     return self.__rbtree:capacity()
 end
 
-function map:get(key)
-    local iter = self.__rbtree:lower_bound(key)
-    if (iter ~= self:xend()) then
+function map:get(k)
+    local iter = self.__rbtree:lower_bound(k)
+    if (iter == self:xend()) then
+        return nil
+    else
         return iter:get()[2]
-    else
-        error("out of range.")
     end
 end
 
-function map:set(key, value)
-    local iter = self.__rbtree:lower_bound(key)
+function map:set(k, v)
+    local iter = self.__rbtree:lower_bound(k)
     if (iter ~= self:xend()) then
-        iter:set({key, value}) -- 覆盖
+        iter:set({k, v}) -- 覆盖
     else
-        self.__rbtree:insert_unique({key, value})
+        self.__rbtree:insert_unique({k, v})
     end
 end
 
-function map:insert(key, value)
-    return self.__rbtree:insert_unique({key, value})
+function map:insert(k, v)
+    return self.__rbtree:insert_unique({k, v})
 end
 
+function map:erase(k)
+    local i = k
+    if (not require("luamon.container.traits.iterator"):made(i)) then
+        i = self.__rbtree:find(k)
+    end
+    self.__rbtree:erase(i)
+end
 
+function map:clear()
+    self.__rbtree:clear()
+end
 
+function map:find(k)
+    return self.__rbtree:find(k)
+end
+
+function map:count(k)
+    return (self.__rbtree:xend() == self.__rbtree:find(k)) and 0 or 1
+end
+
+function map:lower_bound(k)
+    return self.__rbtree:lower_bound(k)
+end
+
+function map:upper_bound(k)
+    return self.__rbtree:upper_bound(k)
+end
+
+function map:equal_range(k)
+    return self.__rbtree:equal_range(k)
+end
+
+function rbtree:__len()
+    return self:size()
+end
+
+function rbtree:__pairs()
+    local curr  = self:xbegin()
+    local xend  = self:xend()
+    local value = nil
+    return function()
+        if (curr == xend) then
+            return nil
+        else
+            value = curr:get()
+            curr:advance(1)
+            return value[1], value[2]
+        end
+    end
+end
+
+return map

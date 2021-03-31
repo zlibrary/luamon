@@ -409,7 +409,7 @@ local function __rbtree_erase_aux(this, z)
             x.parent = p
         end
         if (this.header.parent == z) then
-            this.header.paretn = x
+            this.header.parent = x
         else
             if (p.lchild == z) then
                 p.lchild = x
@@ -590,7 +590,11 @@ end
 
 function rbtree:erase(pos)
     if (pos.class() == __rbtree_iterator) and (pos.inst == self) then
-        __rbtree_erase_aux(self, pos.node)
+        if (pos == self:xend()) then
+            return
+        else
+            __rbtree_erase_aux(self, pos.node)
+        end
     else
         error(string.format("'%s[%s]' not match for 'rbtree:erase()'.", tostring(pos), type(pos)))
     end
