@@ -11,7 +11,7 @@ do  -- keep local things inside
 
     -- 'table'复制（浅拷贝）
     local function duplicate(t)
-        rvalue = {}
+        local rvalue = {}
         for k, v in pairs(t) do
             rvalue[k] = v
         end

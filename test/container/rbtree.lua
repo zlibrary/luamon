@@ -375,12 +375,6 @@ function mytest.testC()
         mytest:assert_true (is_sequential(mytree))
         mytest:assert_true(is_rbtree(mytree))
     end
-
-    do
-        local mytree = RBTree:new()
-        mytree:erase(mytree:xend())
-    end
-
 end
 
 mytest:run()

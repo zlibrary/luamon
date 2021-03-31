@@ -27,69 +27,83 @@ local mytest = TestSuite.new()
 -- 基本测试
 function mytest.testA()
 
+    -- do
+    --     local mymap = Map:new()
+    --     for i = 1, 20 do
+    --         mymap:insert(i, i)
+    --     end
+    --     mytest:assert_eq(mymap:size(), 20)
+    --     mytest:assert_true(is_sequential(mymap))
+
+    --     mymap:set(1, 3)
+    --     mymap:set(5, 3)
+    --     mymap:set(7, 3)
+
+    --     local iter = mymap:xbegin()
+    --     mytest:assert_eq(iter:get()[1], 1)
+    --     mytest:assert_eq(iter:get()[2], 3)
+    --     iter:advance(1)
+    --     mytest:assert_eq(iter:get()[1], 2)
+    --     mytest:assert_eq(iter:get()[2], 2)
+    --     iter:advance(1)
+    --     mytest:assert_eq(iter:get()[1], 3)
+    --     mytest:assert_eq(iter:get()[2], 3)
+    --     iter:advance(1)
+    --     mytest:assert_eq(iter:get()[1], 4)
+    --     mytest:assert_eq(iter:get()[2], 4)
+    --     iter:advance(1)
+    --     mytest:assert_eq(iter:get()[1], 5)
+    --     mytest:assert_eq(iter:get()[2], 3)
+    --     iter:advance(1)
+    --     mytest:assert_eq(iter:get()[1], 6)
+    --     mytest:assert_eq(iter:get()[2], 6)
+    --     iter:advance(1)
+    --     mytest:assert_eq(iter:get()[1], 7)
+    --     mytest:assert_eq(iter:get()[2], 3)
+    --     iter:advance(1)
+    --     mytest:assert_eq(iter:get()[1], 8)
+    --     mytest:assert_eq(iter:get()[2], 8)
+    --     iter:advance(1)
+    --     mytest:assert_eq(iter:get()[1], 9)
+    --     mytest:assert_eq(iter:get()[2], 9)
+    --     iter:advance(1)
+    --     mytest:assert_eq(iter:get()[1], 10)
+    --     mytest:assert_eq(iter:get()[2], 10)
+
+    --     mymap:clear()
+    --     mytest:assert_eq(mymap:size(), 0)
+    --     mytest:assert_true(is_sequential(mymap))
+    -- end
+
+    -- do
+    --     local mymap = Map:new()
+    --     for i = 1, 20 do
+    --         mymap:insert(i, i)
+    --     end
+    --     mytest:assert_eq(mymap:size(), 20)
+    --     mytest:assert_true(is_sequential(mymap))
+
+    --     for i = 1, 30 do
+    --         mymap:erase(mymap:xbegin())
+    --     end
+    --     mytest:assert_eq(mymap:size(), 0)
+    --     mytest:assert_true(is_sequential(mymap))
+    -- end
+
     do
-        local mymap = Map:new()
-        for i = 1, 20 do
-            mymap:insert(i, i)
+        -- local mymap = Map:new()
+        for i = 1, 100000 do
+            local mymap = Map:new()
+            -- mymap:insert(i, i)
         end
-        mytest:assert_eq(mymap:size(), 20)
-        mytest:assert_true(is_sequential(mymap))
-
-        mymap:set(1, 3)
-        mymap:set(5, 3)
-        mymap:set(7, 3)
-
-        local iter = mymap:xbegin()
-        mytest:assert_eq(iter:get()[1], 1)
-        mytest:assert_eq(iter:get()[2], 3)
-        iter:advance(1)
-        mytest:assert_eq(iter:get()[1], 2)
-        mytest:assert_eq(iter:get()[2], 2)
-        iter:advance(1)
-        mytest:assert_eq(iter:get()[1], 3)
-        mytest:assert_eq(iter:get()[2], 3)
-        iter:advance(1)
-        mytest:assert_eq(iter:get()[1], 4)
-        mytest:assert_eq(iter:get()[2], 4)
-        iter:advance(1)
-        mytest:assert_eq(iter:get()[1], 5)
-        mytest:assert_eq(iter:get()[2], 3)
-        iter:advance(1)
-        mytest:assert_eq(iter:get()[1], 6)
-        mytest:assert_eq(iter:get()[2], 6)
-        iter:advance(1)
-        mytest:assert_eq(iter:get()[1], 7)
-        mytest:assert_eq(iter:get()[2], 3)
-        iter:advance(1)
-        mytest:assert_eq(iter:get()[1], 8)
-        mytest:assert_eq(iter:get()[2], 8)
-        iter:advance(1)
-        mytest:assert_eq(iter:get()[1], 9)
-        mytest:assert_eq(iter:get()[2], 9)
-        iter:advance(1)
-        mytest:assert_eq(iter:get()[1], 10)
-        mytest:assert_eq(iter:get()[2], 10)
-
-        mymap:clear()
-        mytest:assert_eq(mymap:size(), 0)
-        mytest:assert_true(is_sequential(mymap))
+        -- mytest:assert_true(is_sequential(mymap))
     end
 
-    do
-        local mymap = Map:new()
-        for i = 1, 20 do
-            mymap:insert(i, i)
-        end
-        mytest:assert_eq(mymap:size(), 20)
-        mytest:assert_true(is_sequential(mymap))
+end
 
-        for i = 1, 30 do
-            mymap:erase(mymap:xbegin())
-        end
-        mytest:assert_eq(mymap:size(), 0)
-        mytest:assert_true(is_sequential(mymap))
-    end
 
+-- 迭代测试
+function mytest.testB()
 end
 
 mytest:run()

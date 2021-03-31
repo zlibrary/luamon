@@ -120,6 +120,7 @@ function mytest.testA()
     mytest:assert_not_error(function() LivingBeing:cast(Robert) end)
     mytest:assert_not_error(function() LivingBeing:cast(Garfield) end)
     mytest:assert_error(function() Cat:cast(Robert) end)
+    mytest:assert_error(function() Cat:cast({}) end)
 
     -- 函数检查
     mytest:assert_eq(Robert:eat(), 'An animal is eating...')
@@ -231,6 +232,31 @@ function mytest.testC()
         mytest:assert_eq(a:get(i), 'a' .. i)
     end
 
+end
+
+function mytest.testD()
+
+    do
+        -- 类型定义
+        local A = newclass('A')
+
+        function A:init()
+            self.v = 1
+        end
+
+        function A:set()
+        end
+
+        function A:get()
+        end
+
+        local a = A:new()
+
+        print("\n------------------------")
+        for k in pairs(a) do
+            print(k)
+        end
+    end
 end
 
 mytest:run()
