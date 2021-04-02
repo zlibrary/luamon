@@ -44,7 +44,7 @@ function __vector_iterator:next()
 end
 
 function __vector_iterator:distance(other)
-    if (other.class() == __vector_iterator) and (self.__obj == other.__obj) then
+    if (other.class == __vector_iterator) and (self.__obj == other.__obj) then
         return other.__idx - self.__idx
     else
         error(string.format("'%s[%s]' not match for 'iterator:distance()'.", tostring(other), type(other)))
@@ -52,7 +52,7 @@ function __vector_iterator:distance(other)
 end
 
 function __vector_iterator:__eq(other)
-    return (self.class() == other.class()) and (self.__obj == other.__obj) and (self.__idx == other.__idx)
+    return (other.class == __vector_iterator) and (self.__obj == other.__obj) and (self.__idx == other.__idx)
 end
 
 function __vector_iterator:__add(n)
@@ -198,7 +198,7 @@ function vector:assign(obj)
 end
 
 function vector:insert(pos, v)
-    if (pos.class() == __vector_iterator) and (pos.__obj == self) then
+    if (pos.class == __vector_iterator) and (pos.__obj == self) then
         table.insert(self.__elems, pos.__idx, v or __vector_nil_mock)
         return pos
     else
@@ -207,7 +207,7 @@ function vector:insert(pos, v)
 end
 
 function vector:erase(pos)
-    if (pos.class() == __vector_iterator) and (pos.__obj == self) then
+    if (pos.class == __vector_iterator) and (pos.__obj == self) then
         table.remove(self.__elems, pos.__idx)
         return pos
     else

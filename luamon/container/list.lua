@@ -52,7 +52,7 @@ function __list_iterator:next()
 end
 
 function __list_iterator:distance(other)
-    if (other.class() == __list_iterator) and (self.__obj == other.__obj) then
+    if (other.class == __list_iterator) and (self.__obj == other.__obj) then
         local c = self
         local n = 0
         while(c ~= other) do
@@ -66,7 +66,7 @@ function __list_iterator:distance(other)
 end
 
 function __list_iterator:__eq(other)
-    return (self.class() == other.class()) and (self.__obj == other.__obj) and (self.__node == other.__node)
+    return (other.class == __list_iterator) and (self.__obj == other.__obj) and (self.__node == other.__node)
 end
 
 function __list_iterator:__add(n)
@@ -195,7 +195,7 @@ function list:assign(obj)
 end
 
 function list:insert(pos, v)
-    if (pos.class() == __list_iterator) and (pos.__obj == self) then
+    if (pos.class == __list_iterator) and (pos.__obj == self) then
         self.__size = self.__size + 1
         local node = 
         {
@@ -212,7 +212,7 @@ function list:insert(pos, v)
 end
 
 function list:erase(pos)
-    if (pos.class() == __list_iterator) and (pos.__obj == self) then
+    if (pos.class == __list_iterator) and (pos.__obj == self) then
         if (pos == self:xend()) then
             return pos
         else

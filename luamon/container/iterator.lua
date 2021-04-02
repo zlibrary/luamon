@@ -38,7 +38,7 @@ function reverse_iterator:next()
 end
 
 function reverse_iterator:distance(other)
-    if other.class() == reverse_iterator then
+    if other.class == reverse_iterator then
         return other.__iterator:distance(self.__iterator)
     else
         error(string.format("'%s[%s]' not match for 'iterator:distance()'.", tostring(other), type(other)))
@@ -103,7 +103,7 @@ function table_iterator:next()
 end
 
 function table_iterator:distance(other)
-    if (other.class() == table_iterator) and (self.__tbl == other.__tbl) then
+    if (other.class == table_iterator) and (self.__tbl == other.__tbl) then
         return other.__idx - self.__idx
     else
         error(string.format("'%s[%s]' not match for 'iterator:distance()'.", tostring(other), type(other)))
@@ -111,7 +111,7 @@ function table_iterator:distance(other)
 end
 
 function table_iterator:__eq(other)
-    return (self.class() == other.class()) and (self.__tbl == other.__tbl) and (self.__idx == other.__idx)
+    return (other.class == table_iterator) and (self.__tbl == other.__tbl) and (self.__idx == other.__idx)
 end
 
 function table_iterator:__add(n)

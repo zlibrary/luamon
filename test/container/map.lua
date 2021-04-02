@@ -91,19 +91,15 @@ function mytest.testA()
     -- end
 
     do
-        -- local mymap = Map:new()
-        for i = 1, 100000 do
-            local mymap = Map:new()
-            -- mymap:insert(i, i)
+        local mymap = Map:new()
+        local mytab = {}
+        for i = 1, 1000000 do
+            mymap:insert(i, i)
+            -- table.insert(mytab, i)
         end
         -- mytest:assert_true(is_sequential(mymap))
     end
 
-end
-
-
--- 迭代测试
-function mytest.testB()
 end
 
 mytest:run()

@@ -4,8 +4,7 @@
 
 do  -- keep local things inside
 
-    -- associations between an object an its meta-informations
-    -- e.g its class, its "lower" object (if any), ...
+    -- 'class'与其元信息间的映射
     local meta = {}
     setmetatable(meta, {__mode = "k"})
 
@@ -20,22 +19,19 @@ do  -- keep local things inside
 
     -- 类型实例生成
     local function newInstance(class, ...)
-        -- 实例生成逻辑
-        local function makeInstance(class, virtuals)
+        -- -- 实例生成逻辑
+        local function makeInstance(class, virtuals, child)
             local inst = duplicate(virtuals)
-            meta[inst] = {obj = inst, class = class}
-            if class:super() then
-                inst.super = makeInstance(class:super(), virtuals)  -- 父类对象使用了子类的虚表（属性/函数覆盖）
-                meta[inst].super = meta[inst.super]
-                meta[inst.super].child = meta[inst]
-            else
-                inst.super = {}
-            end
-            return setmetatable(inst, class.static)
+            -- inst.__class__ = class
+            -- inst.__child__ = child
+        --     -- if class:super() then
+        --     --     inst.__super__ = makeInstance(class:super(), virtuals, inst)  -- 父类对象使用了子类的虚表（属性/函数覆盖）
+        --     -- end
+            -- return setmetatable(inst, class.static)
         end
-        -- 生成类型实例
+        -- -- 生成类型实例
         local inst = makeInstance(class, meta[class].virtuals)
-        inst:init(...)
+        -- inst:init(...)
         return inst
     end
 
@@ -55,23 +51,22 @@ do  -- keep local things inside
             
     -- 类实例转换
     local function tryCast(class, inst)
-        local m = meta[inst]
-        if m.class == class then
+        if inst.class == class then
             return inst
         end
         -- 向上转换
-        local m = meta[inst].super
+        local m = inst.super
         while (m ~= nil) do
             if m.class == class then
-                return m.obj
+                return m
             end
             m = m.super
         end
         -- 向下转换
-        local m = meta[inst].child
+        local m = inst.child
         while (m ~= nil) do
             if m.class == class then
-                return m.obj
+                return m
             end
             m = m.child
         end
@@ -90,12 +85,22 @@ do  -- keep local things inside
 
     -- 实例类型检查
     local function classMade(class, inst)
-        if (meta[inst] == nil) then
-            return false
-        else
-            return (meta[inst].class == class) or meta[inst].class:inherits(class)
-        end
+        local ok, result = pcall(function()
+            return (inst.class == class) or inst.class:inherits(class)
+        end)
+        return ok and result
     end
+
+    -- 关键字集合（关键字为保护字段，防止开发者误用）
+    local keywords = 
+    {
+        ['super'] = function(obj) return obj.__super__ end,
+        ['child'] = function(obj) return obj.__child__ end,
+        ['class'] = function(obj) return obj.__class__ end,
+        __super__ = function(obj) return nil end,
+        __child__ = function(obj) return nil end,
+        __class__ = function(obj) return nil end,
+    }
 
     -- 子类构造逻辑
     local function subclass(base, name)
@@ -127,34 +132,39 @@ do  -- keep local things inside
             __le       = base.static.__le,
             __call     = base.static.__call,
         }
-        block.class = function(obj, ...)        -- 返回实例类型
-            return class
-        end
-        block.init  = function(obj, ...)        -- 默认构造方法
-            obj.super:init(...)
+        block.init = function(obj, ...)         -- 默认构造方法
+            obj.__super__:init(...)
         end
         block.__newindex = function(obj, k, v)  -- 更新实例属性（注意实例属性，不是类型属性）
-            if (obj.super[k] ~= nil) then
-                obj.super[k] = v                -- 优先更新父类
+            if (keywords[k] == nil) then
+                if (obj.__super__[k] == nil) then
+                    rawset(obj, k, v)           -- 更新实例属性
+                else
+                    obj.__super__[k] = v        -- 优先更新父类
+                end
             else
-                rawset(obj, k, v)               -- 更新实例属性
+                error("Prohobit to use keyword[" .. k .. "]")
             end
         end
         block.__index = function(obj, k)        -- 访问实例属性（实例属性优先，类型属性其次）
-            local rvalue = block[k]
-            if (rvalue ~= nil) then
-                return rvalue                   -- 获取类型属性
-            end
-            -- 查找父类属性
-            rvalue = obj.super[k]
-            if (type(rvalue) == "function") then
-                local super = obj.super
-                local fn    = rvalue
-                return function(obj, ...)
-                    return fn(super, ...)
+            if (keywords[k] ~= nil) then
+                return keywords[k](obj)
+            else
+                local rvalue = block[k]
+                if (rvalue ~= nil) then
+                    return rvalue               -- 获取类型属性
                 end
+                -- 查找父类属性
+                rvalue = obj.__super__[k]
+                if (type(rvalue) == "function") then
+                    local super = obj.__super__
+                    local fn    = rvalue
+                    return function(obj, ...)
+                        return fn(super, ...)
+                    end
+                end
+                return rvalue
             end
-            return rvalue
         end
 
         -- 保存虚表
@@ -164,6 +174,9 @@ do  -- keep local things inside
         setmetatable(class,
         {
             __newindex = function(class, k, v)  -- 更新类型属性(包括虚属性)
+                if (k == 'class') or (k == 'super') or (k == 'child') then
+                    error("Prohibit to use keyword[" .. k .. "]")
+                end
                 block[k] = v
                 if (meta[class].virtuals[k] ~= nil) then
                     meta[class].virtuals[k] = v
@@ -207,12 +220,9 @@ do  -- keep local things inside
     block.__newindex = newindex                 -- 禁止修改'类型方法/静态属性'
     block.__index = block                       -- 允许访问'类型方法/静态属性'
     block.__tostring = function(obj)            -- 返回对象描述
-        return (obj:class():name())
+        return (obj.class:name())
     end
-    block.init  = function(obj, ...) end        -- 默认构造方法
-    block.class = function(obj, ...)            -- 返回实例类型
-        return Object
-    end
+    block.init = function(obj, ...) end         -- 默认构造方法
 
     -- 类型元表
     local class =

@@ -72,7 +72,7 @@ function __deque_iterator:next()
 end
 
 function __deque_iterator:distance(other)
-    if (other.class() == __deque_iterator) and (self.__obj == other.__obj) then
+    if (other.class == __deque_iterator) and (self.__obj == other.__obj) then
         local mdv = (other.__midx - self.__midx)
         local cdv = (other.__cidx - self.__cidx)
         return (mdv * __deque_section_length) + cdv
@@ -82,7 +82,7 @@ function __deque_iterator:distance(other)
 end
 
 function __deque_iterator:__eq(other)
-    if (self.class() ~= other.class()) or (self.__obj ~= other.__obj) then
+    if (other.class ~= __deque_iterator) or (self.__obj ~= other.__obj) then
         return false
     else
         return (self.__midx == other.__midx) and (self.__cidx == other.__cidx)
@@ -277,7 +277,7 @@ function deque:pop_back()
 end
 
 function deque:insert(pos, v)
-    if (pos.class() == __deque_iterator) and (pos.__obj == self) then
+    if (pos.class == __deque_iterator) and (pos.__obj == self) then
         if (math.abs(self:xbegin():distance(pos)) <= math.abs(self:xend():distance(pos))) then
             self:push_front(v)
             local iter = self:xbegin()
@@ -313,7 +313,7 @@ function deque:insert(pos, v)
 end
 
 function deque:erase(pos)
-    if (pos.class() == __deque_iterator) and (pos.__obj == self) then
+    if (pos.class == __deque_iterator) and (pos.__obj == self) then
         if (pos == self:xend()) then
             return pos
         end

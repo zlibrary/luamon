@@ -24,5 +24,31 @@ function map:rend()
     return iterator:rend(self)
 end
 
-function map:init()
+function map:init(mutable)
+    self.super:init("associated")
+    self.__htable  = {}
+    self.__linked  = list:new()
+    self.__mutable = not not mutable
+end
+
+function map:size()
+    return self.__linked:size()
+end
+
+function map:empty()
+    return self.__linked:empty()
+end
+
+function map:capacity()
+    return self.__linked:capacity()
+end
+
+function map:get(k)
+end
+
+function map:set(k, v)
+end
+
+function map:insert(k, v)
+
 

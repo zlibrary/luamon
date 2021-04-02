@@ -35,12 +35,4 @@ function queue:pop()
     self.__deque:pop_front()
 end
 
-function deque:__len()
-    return self:size()
-end
-
-function deque:__pairs()
-    error("this function not implemented.")
-end
-
 return queue

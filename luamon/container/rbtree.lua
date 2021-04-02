@@ -111,7 +111,7 @@ function __rbtree_iterator:next()
 end
 
 function __rbtree_iterator:distance(other)
-    if (other.class() == __rbtree_iterator) and (self.inst == other.inst) then
+    if (other.class == __rbtree_iterator) and (self.inst == other.inst) then
         local e = self.inst:xend()
         local c = self
         local n = 0
@@ -132,7 +132,7 @@ function __rbtree_iterator:distance(other)
 end
 
 function __rbtree_iterator:__eq(other)
-    return (self.class() == other.class()) and (self.inst == other.inst) and (self.node == other.node)
+    return (other.class == __rbtree_iterator) and (self.inst == other.inst) and (self.node == other.node)
 end
 
 function __rbtree_iterator:__add(n)
@@ -589,7 +589,7 @@ function rbtree:capacity()
 end
 
 function rbtree:erase(pos)
-    if (pos.class() == __rbtree_iterator) and (pos.inst == self) then
+    if (pos.class == __rbtree_iterator) and (pos.inst == self) then
         if (pos == self:xend()) then
             return
         else
@@ -654,15 +654,15 @@ function rbtree:equal_count(k)
 end
 
 function rbtree:insert_unique(v)
-    local r = __rbtree_get_insert_unique_pos(self, self.kextract(v))
-    local e = r[1]
-    local p = r[2]
-    if (p ~= nil) then
-        local z = __rbtree_insert_aux(self, p, v)
-        return {__rbtree_iterator:new(self, z), true }
-    else
-        return {__rbtree_iterator:new(self, e), false}
-    end
+    -- local r = __rbtree_get_insert_unique_pos(self, self.kextract(v))
+    -- local e = r[1]
+    -- local p = r[2]
+    -- if (p ~= nil) then
+    --     local z = __rbtree_insert_aux(self, p, v)
+    --     return {__rbtree_iterator:new(self, z), true }
+    -- else
+    --     return {__rbtree_iterator:new(self, e), false}
+    -- end
 end
 
 function rbtree:insert_equal(v)
