@@ -184,9 +184,6 @@ function mytest.testB()
     mytest:assert_eq(a.value, 1)
     mytest:assert_eq(b.value, 1)
     mytest:assert_eq(c.value, 1)
-
-
-
 end
 
 -- 私有数据测试（通过外部表'mtab'实现）

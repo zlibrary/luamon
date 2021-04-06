@@ -57,24 +57,24 @@ do  -- keep local things inside
             
     -- 类实例转换
     local function tryCast(class, inst)
-        if inst:class() == class then
+        if inst.class == class then
             return inst
         end
         -- 向上转换
-        local m = inst:super()
+        local m = inst.super
         while (m ~= nil) do
-            if m:class() == class then
+            if m.class == class then
                 return m
             end
-            m = m:super()
+            m = m.super
         end
         -- 向下转换
-        local m = inst:child()
+        local m = inst.child
         while (m ~= nil) do
-            if m:class() == class then
+            if m.class == class then
                 return m
             end
-            m = m:child()
+            m = m.child
         end
         return nil
     end
@@ -92,16 +92,8 @@ do  -- keep local things inside
     -- 实例类型检查
     local function classMade(class, inst)
         local ok, result = pcall(function()
-            print("\n----------------------------------------------", class)
-            local c = inst:class()
-            if c == nil then
-                print("\n--------------------------- NIL")
-            else
-                print("\n--------------------------- NO NIL", type(c))
-            end
-            return (inst:class() == class) or inst:class():inherits(class)
+            return (inst.class == class) or inst.class:inherits(class)
         end)
-        print("\n----------------------------------------------", ok, result)
         return ok and result
     end
 
@@ -110,7 +102,7 @@ do  -- keep local things inside
     {
         ['super'] = function(obj) return meta[obj].super end,
         ['child'] = function(obj) return meta[obj].child end,
-        ['class'] = function(obj) print("****************", meta[obj].class); return meta[obj].class end,
+        ['class'] = function(obj) return meta[obj].class end,
     }
 
     -- 子类构造逻辑
@@ -159,7 +151,6 @@ do  -- keep local things inside
         end
         block.__index = function(obj, k)        -- 访问实例属性（实例属性优先，类型属性其次）
             if (keywords[k] ~= nil) then
-                print("\nMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM : ", k)
                 return keywords[k](obj)
             else
                 local rvalue = block[k]
