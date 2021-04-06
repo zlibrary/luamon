@@ -11,153 +11,6 @@ local algorithm = require "luamon.container.algorithm"
 local iterator  = require "luamon.container.iterator"
 
 -------------------------------------------------------------------------------
---- 迭代器（正向）
-local __rbtree_iterator = newclass("__rbtree_iterator", require("luamon.container.traits.iterator"))
-
-function __rbtree_iterator:init(inst, node)
-    self.super:init("bidirectional")
-    self.inst = inst
-    self.node = node
-end
-
-function __rbtree_iterator:get()
-    return self.node.value
-end
-
-function __rbtree_iterator:set(v)
-    self.node.value = v
-end
-
-function __rbtree_iterator:increment()
-    if (self.node == self.inst.header) then
-        return
-    else
-        if (self.node.rchild ~= nil) then
-            self.node = self.node.rchild
-            while(self.node.lchild) do
-                self.node = self.node.lchild
-            end
-        else
-            local p = self.node.parent
-            local x = self.node
-            while(x == p.rchild) do
-                x = p
-                p = p.parent
-            end
-            if (x == self.inst.header) then
-                self.node = x
-            else
-                self.node = p
-            end
-        end
-    end
-end
-
-function __rbtree_iterator:decrement()
-    if (self.node == self.inst.header) then
-        self.node =  self.node.rchild
-    else
-        if (self.node.lchild ~= nil) then
-            self.node = self.node.lchild
-            while(self.node.rchild) do
-                self.node = self.node.rchild
-            end
-        else
-            local p = self.node.parent
-            local x = self.node
-            while(x == p.lchild) do
-                x = p
-                p = p.parent
-            end
-            if (x == self.inst.header) then
-                self.node = x
-            else
-                self.node = p
-            end
-        end
-    end
-end
-
-function __rbtree_iterator:advance(n)
-    local nm = math.tointeger(n)
-    if nm then
-        while(true) do
-            if (nm == 0) then
-                break
-            end
-            if (nm < 0) then
-                nm = nm + 1
-                self:decrement()
-            else
-                nm = nm - 1
-                self:increment()
-            end
-        end
-    else
-        error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
-    end
-end
-
-function __rbtree_iterator:prev()
-    local tmp = __rbtree_iterator:new(self.inst, self.node)
-    tmp:decrement()
-    return tmp
-end
-
-function __rbtree_iterator:next()
-    local tmp = __rbtree_iterator:new(self.inst, self.node)
-    tmp:increment()
-    return tmp
-end
-
-function __rbtree_iterator:distance(other)
-    if (other.class == __rbtree_iterator) and (self.inst == other.inst) then
-        local e = self.inst:xend()
-        local c = self
-        local n = 0
-        while(true) do
-            if (c == other) then
-                return n
-            end
-            if (c == e) then
-                error("iterator:distance() overflow.")
-            else
-                n = n + 1
-                c = c + 1
-            end
-        end
-    else
-        error(string.format("'%s[%s]' not match for 'iterator:distance()'.", tostring(other), type(other)))
-    end
-end
-
-function __rbtree_iterator:__eq(other)
-    return (other.class == __rbtree_iterator) and (self.inst == other.inst) and (self.node == other.node)
-end
-
-function __rbtree_iterator:__add(n)
-    local nm = math.tointeger(n)
-    if nm and (nm >= 0) then
-        local tmp = __rbtree_iterator:new(self.inst, self.node)
-        tmp:advance(nm)
-        return tmp
-    else
-        error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
-    end
-end
-
-function __rbtree_iterator:__sub(n)
-    local nm = math.tointeger(n)
-    if nm and (nm >= 0) then
-        local tmp = __rbtree_iterator:new(self.inst, self.node)
-        tmp:advance(-nm)
-        return tmp
-    else
-        error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
-    end
-end
-
--------------------------------------------------------------------------------
 local __rbtree_color_red   = 1
 local __rbtree_color_black = 2
 
@@ -235,43 +88,96 @@ local function __rbtree_rotate_r(this, x)
     x.parent = y
 end
 
+local function __rbtree_increment(this, x)
+    if (x == this.header) then
+        return x
+    else
+        if (x.rchild ~= nil) then
+            x = x.rchild
+            while (x.lchild) do
+                x = x.lchild
+            end
+            return x
+        else
+            local p = x.parent
+            while (x == p.rchild) do
+                x = p
+                p = p.parent
+            end
+            if (x == this.header) then
+                return x
+            else
+                return p
+            end
+        end
+    end
+end
+
+local function __rbtree_decrement(this, x)
+    if (x == this.header) then
+        return this.header.rchild
+    else
+        if (x.lchild ~= nil) then
+            x = x.lchild
+            while (x.rchild) do
+                x = x.rchild
+            end
+            return x
+        else
+            local p = x.parent
+            while(x == p.lchild) do
+                x = p
+                p = p.parent
+            end
+            if (x == this.header) then
+                return x
+            else
+                return p
+            end
+        end
+    end
+end
+
 local function __rbtree_get_insert_unique_pos(this, k)
+    local kcompare = this.kcompare
+    local kextract = this.kextract
     local x = __rbtree_begin(this)
     local y = __rbtree_end(this)
     local c = true
-    while(x ~= nil) do -- 向下查找合适插入的叶节点
+    while(x ~= nil) do
         y = x
-        c = this.kcompare(k, this.kextract(x.value))
+        c = kcompare(k, kextract(x.value))
         if c then
             x = x.lchild
         else
             x = x.rchild
         end
     end
-    local j = __rbtree_iterator:new(this, y)
+    local j = y
     if c then
-        -- 新键值作为'j'的左孩子插入
-        if (this:xbegin() == j) then
+        if (__rbtree_minimum(this) == y) then
             -- 'y'是首节点（无需后退检查是否存在重复键值）
             return {x, y}
         else
             -- 'y'非首节点（需要后退检查是否存在重复键值）
-            j:decrement()
+            j = __rbtree_decrement(this, y)
         end
     end
-    if (this.kcompare(this.kextract(j:get()), k)) then
+    if (kcompare(kextract(j.value), k)) then
         return {x, y} -- 没有重复键值
     else
-        return {j.__node, nil}
+        return {y, nil}
     end
 end
 
 local function __rbtree_get_insert_equal_pos(this, k)
+    local kcompare = this.kcompare
+    local kextract = this.kextract
     local x = __rbtree_begin(this)
     local y = __rbtree_end(this)
-    while(x ~= nil) do -- 向下查找合适插入的叶节点
+    while(x ~= nil) do
         y = x
-        if this.kcompare(k, this.kextract(x.value)) then
+        if kcompare(k, kextract(x.value)) then
             x = x.lchild
         else
             x = x.rchild
@@ -531,6 +437,103 @@ local function __rbtree_erase_aux(this, z)
 end
 
 -------------------------------------------------------------------------------
+--- 迭代器（正向）
+local __rbtree_iterator = newclass("__rbtree_iterator", require("luamon.container.traits.iterator"))
+
+function __rbtree_iterator:init(inst, node)
+    self.super:init("bidirectional")
+    self.inst = inst
+    self.node = node
+end
+
+function __rbtree_iterator:get()
+    return self.node.value
+end
+
+function __rbtree_iterator:set(v)
+    self.node.value = v
+end
+
+function __rbtree_iterator:advance(n)
+    local nm = math.tointeger(n)
+    if nm then
+        while(true) do
+            if (nm == 0) then
+                break
+            end
+            if (nm < 0) then
+                nm = nm + 1
+                self.node = __rbtree_decrement(self.inst, self.node)
+            else
+                nm = nm - 1
+                self.node = __rbtree_increment(self.inst, self.node)
+            end
+        end
+    else
+        error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
+    end
+end
+
+function __rbtree_iterator:prev()
+    local tmp = __rbtree_iterator:new(self.inst, self.node)
+    tmp:advance(-1)
+    return tmp
+end
+
+function __rbtree_iterator:next()
+    local tmp = __rbtree_iterator:new(self.inst, self.node)
+    tmp:advance(1)
+    return tmp
+end
+
+function __rbtree_iterator:distance(other)
+    if (other.class == __rbtree_iterator) and (self.inst == other.inst) then
+        local e = self.inst:xend()
+        local c = self
+        local n = 0
+        while(true) do
+            if (c == other) then
+                return n
+            end
+            if (c == e) then
+                error("iterator:distance() overflow.")
+            else
+                n = n + 1
+                c = c + 1
+            end
+        end
+    else
+        error(string.format("'%s[%s]' not match for 'iterator:distance()'.", tostring(other), type(other)))
+    end
+end
+
+function __rbtree_iterator:__eq(other)
+    return (other.class == __rbtree_iterator) and (self.inst == other.inst) and (self.node == other.node)
+end
+
+function __rbtree_iterator:__add(n)
+    local nm = math.tointeger(n)
+    if nm and (nm >= 0) then
+        local tmp = __rbtree_iterator:new(self.inst, self.node)
+        tmp:advance(nm)
+        return tmp
+    else
+        error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
+    end
+end
+
+function __rbtree_iterator:__sub(n)
+    local nm = math.tointeger(n)
+    if nm and (nm >= 0) then
+        local tmp = __rbtree_iterator:new(self.inst, self.node)
+        tmp:advance(-nm)
+        return tmp
+    else
+        error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
+    end
+end
+
+-------------------------------------------------------------------------------
 --- 红黑树
 local rbtree = newclass("rbtree", require("luamon.container.traits.container"))
 
@@ -654,20 +657,25 @@ function rbtree:equal_count(k)
 end
 
 function rbtree:insert_unique(v)
-    -- local r = __rbtree_get_insert_unique_pos(self, self.kextract(v))
-    -- local e = r[1]
-    -- local p = r[2]
-    -- if (p ~= nil) then
-    --     local z = __rbtree_insert_aux(self, p, v)
-    --     return {__rbtree_iterator:new(self, z), true }
-    -- else
-    --     return {__rbtree_iterator:new(self, e), false}
-    -- end
+    local r = __rbtree_get_insert_unique_pos(self, self.kextract(v))
+    local p = r[2]
+    if (p ~= nil) then
+        __rbtree_insert_aux(self, p, v)
+        return true
+    else
+        return false
+    end
 end
 
 function rbtree:insert_equal(v)
     local r = __rbtree_get_insert_equal_pos(self, self.kextract(v))
-    return __rbtree_iterator:new(self, __rbtree_insert_aux(self, r[2], v))
+    local p = r[2]
+    if (p ~= nil) then
+        __rbtree_insert_aux(self, p, v)
+        return true
+    else
+        return false
+    end
 end
 
 function rbtree:__len()

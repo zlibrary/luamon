@@ -47,6 +47,8 @@ local function is_rbtree(mytree)
             local lheight = height(node.lchild)
             local rheight = height(node.rchild)
             if (lheight ~= rheight) then
+                print("\n")
+                print(string.format("---- %s : %s : %s", node.value, lheight, rheight))
                 return false
             else
                 return is_balance(node.lchild) and is_balance(node.rchild) 

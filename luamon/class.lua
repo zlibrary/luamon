@@ -22,16 +22,16 @@ do  -- keep local things inside
         -- -- 实例生成逻辑
         local function makeInstance(class, virtuals, child)
             local inst = duplicate(virtuals)
-            -- inst.__class__ = class
-            -- inst.__child__ = child
-        --     -- if class:super() then
-        --     --     inst.__super__ = makeInstance(class:super(), virtuals, inst)  -- 父类对象使用了子类的虚表（属性/函数覆盖）
-        --     -- end
-            -- return setmetatable(inst, class.static)
+            inst.__class__ = class
+            inst.__child__ = child
+            if class:super() then
+                inst.__super__ = makeInstance(class:super(), virtuals, inst)  -- 父类对象使用了子类的虚表（属性/函数覆盖）
+            end
+            return setmetatable(inst, class.static)
         end
-        -- -- 生成类型实例
+        -- 生成类型实例
         local inst = makeInstance(class, meta[class].virtuals)
-        -- inst:init(...)
+        inst:init(...)
         return inst
     end
 
