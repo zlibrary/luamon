@@ -250,13 +250,7 @@ function mytest.testD()
         local B = A:subclass('B')
 
         for i = 1, 1000000 do
-
-            -- local a = {}
-            -- a.__index__ = 1
-            -- a.__class__ = 2
-
             local a = B:new()
-
         end
 
     end

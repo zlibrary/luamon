@@ -62,7 +62,7 @@ end
 function map:set(k, v)
     local iter = self.__rbtree:lower_bound(k)
     if (iter ~= self:xend()) then
-        iter:set({k, v}) -- 覆盖
+        iter:set({k, v})
     else
         self.__rbtree:insert_unique({k, v})
     end
