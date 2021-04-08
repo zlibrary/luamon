@@ -6,6 +6,32 @@ local algorithm = require "luamon.container.algorithm"
 local iterator  = require "luamon.container.iterator"
 
 -------------------------------------------------------------------------------
+
+local function __list_insert_aux(this, p, v)
+    this.__size = this.__size + 1
+    local node = 
+    {
+        [1] = p[1],
+        [2] = p,
+        [3] = v,
+    }
+    p[1][2] = node
+    p[1]    = node
+    return node
+end
+
+local function __list_erase_aux(this, p)
+    if (p == this.__node) then
+        return p
+    else
+        p[1][2] = p[2]
+        p[2][1] = p[1]
+        this.__size = this.__size - 1
+        return p[2]
+    end
+end
+
+-------------------------------------------------------------------------------
 --- 迭代器（正向）
 local __list_iterator = newclass("__list_iterator", require("luamon.container.traits.iterator"))
 
@@ -164,13 +190,11 @@ function list:resize(n, v)
 end
 
 function list:front()
-    return self:xbegin():get()
+    return self.__node[2][3]
 end
 
 function list:back()
-    local tmp = self:xend()
-    tmp = tmp - 1
-    return tmp:get()
+    return self.__node[1][3]
 end
 
 function list:assign(obj)
@@ -196,16 +220,7 @@ end
 
 function list:insert(pos, v)
     if (pos.class == __list_iterator) and (pos.__obj == self) then
-        self.__size = self.__size + 1
-        local node = 
-        {
-            [1] = pos.__node[1],
-            [2] = pos.__node,
-            [3] = v
-        }
-        pos.__node[1][2] = node
-        pos.__node[1]    = node
-        return __list_iterator:new(self, node)
+        __list_insert_aux(self, pos.__node, v)
     else
         error(string.format("'%s[%s]' is invalid argument for type 'iterator'.", tostring(pos), type(pos)))
     end
@@ -213,16 +228,7 @@ end
 
 function list:erase(pos)
     if (pos.class == __list_iterator) and (pos.__obj == self) then
-        if (pos == self:xend()) then
-            return pos
-        else
-            pos.__node[1][2] = pos.__node[2]
-            pos.__node[2][1] = pos.__node[1]
-            if (self.__size >= 1) then
-                self.__size = self.__size - 1
-            end
-            return __list_iterator:new(self, pos.__node[2])
-        end
+        __list_erase_aux(self, pos.__node)
     else
         error(string.format("'%s[%s]' is invalid argument for type 'iterator'.", tostring(pos), type(pos)))
     end
@@ -236,19 +242,19 @@ function list:clear()
 end
 
 function list:push_front(v)
-    self:insert(self:xbegin(), v)
+    __list_insert_aux(self, self.__node[2], v)
 end
 
 function list:pop_front()
-    self:erase(self:xbegin())
+    __list_erase_aux(self, self.__node[2])
 end
 
 function list:push_back(v)
-    self:insert(self:xend(), v)
+    __list_insert_aux(self, self.__node, v)
 end
 
 function list:pop_back()
-    self:erase(self:xend() - 1)
+    __list_erase_aux(self, self.__node[1])
 end
 
 function list:__len()

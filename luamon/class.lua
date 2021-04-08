@@ -177,7 +177,7 @@ do  -- keep local things inside
         setmetatable(class,
         {
             __newindex = function(class, k, v)  -- 更新类型属性(包括虚属性)
-                if (k == 'class') or (k == 'super') or (k == 'child') then
+                if (keywords[k] ~= nil) then
                     error("Prohibit to use keyword[" .. k .. "]")
                 end
                 block[k] = v
