@@ -126,7 +126,7 @@ local function __initialize_deque(deque, first, last)
     end
     return deque
 end
-        
+
 function deque:xbegin()
     return (self.__head + 0)
 end
@@ -232,7 +232,8 @@ function deque:push_front(v)
         cindex = __deque_section_length
         self.__sections[mindex] = {}
     end
-    self.__head = __deque_iterator:new(self, mindex, cindex)
+    self.__head.__midx = mindex
+    self.__head.__cidx = cindex
     self.__head:set(v)
 end
 
@@ -247,7 +248,8 @@ function deque:pop_front()
         cindex = 1
         self.__sections[mindex - 1] = {}
     end
-    self.__head = __deque_iterator:new(self, mindex, cindex)
+    self.__head.__midx = mindex
+    self.__head.__cidx = cindex
 end
 
 function deque:push_back(v)
@@ -259,7 +261,8 @@ function deque:push_back(v)
         cindex = 1
         self.__sections[mindex] = {}
     end
-    self.__tail = __deque_iterator:new(self, mindex, cindex)
+    self.__tail.__midx = mindex
+    self.__tail.__cidx = cindex
 end
 
 function deque:pop_back()
@@ -273,39 +276,41 @@ function deque:pop_back()
         cindex = __deque_section_length
         self.__sections[mindex + 1] = nil
     end
-    self.__tail = __deque_iterator:new(self, mindex, cindex)
+    self.__tail.__midx = mindex
+    self.__tail.__cidx = cindex
 end
 
 function deque:insert(pos, v)
     if (pos.class == __deque_iterator) and (pos.__obj == self) then
-        if (math.abs(self:xbegin():distance(pos)) <= math.abs(self:xend():distance(pos))) then
+        if (math.abs(self.__head:distance(pos)) <= math.abs(self.__tail:distance(pos))) then
             self:push_front(v)
-            local iter = self:xbegin()
+            local curr = (self.__head + 0)
+            local next = (self.__head + 1)
             while(true) do
-                if (iter == (pos - 1)) then
-                    iter:set(v)
+                if (next == pos) then
+                    curr:set(v)
                     break
                 else
-                    local next = iter:next()
-                    iter:set(next:get())
-                    iter = next
+                    curr:set(next:get())
+                    curr:advance(1)
+                    next:advance(1)
                 end
             end
-            return iter
+            return curr
         else
             self:push_back(v)
-            local iter = self:xend() - 1
+            local curr = (self.__tail - 0)
+            local prev = (self.__tail - 1)
             while(true) do
-                if (iter == pos) then
-                    iter:set(v)
+                curr:advance(-1)
+                if (curr == pos) then
+                    curr:set(v)
                     break
-                else
-                    local prev = iter:prev()
-                    iter:set(prev:get())
-                    iter = prev
                 end
+                prev:advance(-1)
+                curr:set(prev:get())
             end
-            return iter
+            return curr
         end
     else
         error(string.format("'%s[%s]' is invalid argument for type 'iterator'.", tostring(pos), type(pos)))
@@ -314,32 +319,33 @@ end
 
 function deque:erase(pos)
     if (pos.class == __deque_iterator) and (pos.__obj == self) then
-        if (pos == self:xend()) then
+        if (pos == self.__tail) then
             return pos
         end
-        if (math.abs(self:xbegin():distance(pos)) <= math.abs(self:xend():distance(pos))) then
-            local iter = pos
+        if (math.abs(self.__head:distance(pos)) <= math.abs(self.__tail:distance(pos))) then
+            local curr = (pos + 0)
+            local prev = (pos + 0)
             while(true) do
-                if (iter == self:xbegin()) then
+                if (curr == self.__head) then
                     break
                 else
-                    local prev = iter:prev()
-                    iter:set(prev:get())
-                    iter = prev
+                    prev:advance(-1)
+                    curr:set(prev:get())
+                    curr:advance(-1)
                 end
             end
             self:pop_front()
             return (pos + 1)
         else
-            local iter = pos
+            local curr = (pos + 0)
+            local next = (pos + 0)
             while(true) do
-                local next = iter:next()
-                if (next == self:xend()) then
+                next:advance(1)
+                if (next == self.__tail) then
                     break
-                else
-                    iter:set(next:get())
-                    iter = next
                 end
+                curr:set(next:get())
+                curr:advance(1)
             end
             self:pop_back()
             return (pos + 0)

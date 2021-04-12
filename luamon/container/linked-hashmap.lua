@@ -88,8 +88,10 @@ function map:erase(k)
         k = k:get()[1]
     end
     local i = self.__htable[k]
-    self.__htable[k] = nil
-    self.__linked:erase(i)
+    if (i ~= nil) then
+        self.__htable[k] = nil
+        self.__linked:erase(i)
+    end
 end
 
 function map:clear()
