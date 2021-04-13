@@ -65,10 +65,12 @@ function mytest.testA()
         end
         mytest:assert_eq(mymap:size(), 20)
 
+        -- [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
         mymap:set(1, 3)
         mymap:set(5, 3)
         mymap:set(7, 3)
 
+        -- [2, 3, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 1, 5, 7]
         local iter = mymap:xbegin()
         mytest:assert_eq(iter:get()[1], 2)
         mytest:assert_eq(iter:get()[2], 2)
@@ -111,6 +113,8 @@ function mytest.testA()
         mytest:assert_eq(iter:get()[2], 3)
 
         mymap:get(12)
+
+        -- [2, 3, 4, 6, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 1, 5, 7, 12]
         mytest:assert_eq(mymap:rbegin():get()[1], 12)
         mytest:assert_eq(mymap:rbegin():get()[2], 12)
 
@@ -122,6 +126,7 @@ function mytest.testA()
         mymap:erase(mymap:xbegin())
         mytest:assert_eq(mymap:size(), 15)
 
+        -- [8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 1, 5, 12]
         local iter = mymap:xbegin()
         mytest:assert_eq(iter:get()[1], 8)
         mytest:assert_eq(iter:get()[2], 8)

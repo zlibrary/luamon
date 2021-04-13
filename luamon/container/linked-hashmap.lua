@@ -3,19 +3,168 @@
 -------------------------------------------------------------------------------
 require "luamon"
 local algorithm = require "luamon.container.algorithm"
-local list      = require "luamon.container.list"
 local iterator  = require "luamon.container.iterator"
+
+-------------------------------------------------------------------------------
+--- 迭代器（正向）
+local __lhm_iterator = newclass("__lhm_iterator", require("luamon.container.traits.iterator"))
+
+function __lhm_iterator:init(obj, node)
+    self.super:init("bidirectional")
+    self.__obj  = obj
+    self.__node = node
+end
+
+function __lhm_iterator:get()
+    return self.__node[3]
+end
+
+function __lhm_iterator:set(v)
+    self.__node[3] = v
+end
+
+function __lhm_iterator:advance(n)
+    local nm = math.tointeger(n)
+    if nm then
+        while(true) do
+            if (nm == 0) then
+                break
+            end
+            if (nm < 0) then
+                nm = nm + 1
+                self.__node = self.__node[1]
+            else
+                nm = nm - 1
+                self.__node = self.__node[2]
+            end
+        end
+    else
+        error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
+    end
+end
+
+function __lhm_iterator:prev()
+    return __lhm_iterator:new(self.__obj, self.__node[1])
+end
+
+function __lhm_iterator:next()
+    return __lhm_iterator:new(self.__obj, self.__node[2])
+end
+
+function __lhm_iterator:distance(other)
+    if (other.class == __lhm_iterator) and (self.__obj == other.__obj) then
+        local c = self
+        local n = 0
+        while(c ~= other) do
+            n = n + 1
+            c = c + 1
+        end
+        return n
+    else
+        error(string.format("'%s[%s]' not match for 'iterator:distance()'.", tostring(other), type(other)))
+    end
+end
+
+function __lhm_iterator:__eq(other)
+    return (other.class == __lhm_iterator) and (self.__obj == other.__obj) and (self.__node == other.__node)
+end
+
+function __lhm_iterator:__add(n)
+    local nm = math.tointeger(n)
+    if nm and (nm >= 0) then
+        local iter = __lhm_iterator:new(self.__obj, self.__node)
+        iter:advance(nm)
+        return iter
+    else
+        error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
+    end
+end
+
+function __lhm_iterator:__sub(n)
+    local nm = math.tointeger(n)
+    if nm and (nm >= 0) then
+        local iter = __lhm_iterator:new(self.__obj, self.__node)
+        iter:advance(-nm)
+        return iter
+    else
+        error(string.format("'%s[%s]' is invalid argument for type 'unsigned int'.", tostring(n), type(n)))
+    end
+end
+
+-------------------------------------------------------------------------------
+--- 链表定义（简化的'list'容器）
+local __lhm_list = newclass("__lhm_list")
+
+-- 插入节点
+local function __list_insert_aux(this, p, v)
+    this.__size = this.__size + 1
+    local node = 
+    {
+        [1] = p[1],
+        [2] = p,
+        [3] = v,
+    }
+    p[1][2] = node
+    p[1]    = node
+    return node
+end
+
+-- 移除节点
+local function __list_erase_aux(this, p)
+    if (p == this.__node) then
+        return p
+    else
+        p[1][2] = p[2]
+        p[2][1] = p[1]
+        this.__size = this.__size - 1
+        return p[2]
+    end
+end
+
+function __lhm_list:init()
+    self.__node = {}
+    self.__size = 0
+    self.__node[1] = self.__node
+    self.__node[2] = self.__node
+end
+
+function __lhm_list:capacity()
+    return 0x7FFFFFFF
+end
+
+function __lhm_list:size()
+    return self.__size
+end
+
+function __lhm_list:empty()
+    return (self.__size == 0)
+end
+
+function __lhm_list:clear()
+    self.__node = {}
+    self.__size = 0
+    self.__node[1] = self.__node
+    self.__node[2] = self.__node
+end
+
+function __lhm_list:erase(p)
+    return __list_erase_aux(self, p)
+end
+
+function __lhm_list:push_back(v)
+    return __list_insert_aux(self, self.__node, v)
+end
 
 -------------------------------------------------------------------------------
 --- 容器定义
 local map = newclass("linked-hashmap", require("luamon.container.traits.container"))
 
 function map:xbegin()
-    return self.__linked:xbegin()
+    return __lhm_iterator:new(self.__linked, self.__linked.__node[2])
 end
 
 function map:xend()
-    return self.__linked:xend()
+    return __lhm_iterator:new(self.__linked, self.__linked.__node)
 end
 
 function map:rbegin()
@@ -29,7 +178,7 @@ end
 function map:init(access_order)
     self.super:init("associated")
     self.__htable  = {}
-    self.__linked  = list:new()
+    self.__linked  = __lhm_list:new()
     self.__mutable = (not (not access_order))
 end
 
@@ -50,10 +199,10 @@ function map:get(k)
     if (node == nil) then
         return nil
     else
-        local v = node:get()
+        local v = node[3]
         if (self.__mutable == true) then
-            self.__linked:push_back(v)
             self.__linked:erase(node)
+            self.__linked:push_back(v)
         end
         return v[2]
     end
@@ -61,42 +210,40 @@ end
 
 function map:set(k, v)
     local node = self.__htable[k]
-    if (node == nil) then
-        self.__htable[k] = self.__linked:insert(self.__linked:xend(), {k, v})
+    if ((node ~= nil) and (self.__mutable == false)) then
+        node[3] = {k,v}
     else
-        if (self.__mutable == true) then
-            self.__linked:push_back(node:get())
+        if (node ~= nil) then
             self.__linked:erase(node)
-            node = self.__linked:xend() - 1
         end
-        node:set({k, v})
-        self.__htable[k] = node
+        self.__htable[k] = self.__linked:push_back({k,v})
     end
 end
 
 function map:insert(k, v)
     local node = self.__htable[k]
     if (node == nil) then
-        self.__htable[k] = self.__linked:insert(self.__linked:xend(), {k, v})
+        self.__htable[k] = self.__linked:push_back({k,v})
+        return true
     else
         return false
     end
 end
 
 function map:erase(k)
-    if require("luamon.container.traits.iterator"):made(k) then
+    if __lhm_iterator:made(k) and (self.__linked == k.__obj) then
         k = k:get()[1]
     end
-    local i = self.__htable[k]
-    if (i ~= nil) then
+    local node = self.__htable[k]
+    if (node ~= nil) then
         self.__htable[k] = nil
-        self.__linked:erase(i)
+        self.__linked:erase(node)
     end
 end
 
 function map:clear()
     self.__htable  = {}
-    self.__linked  = list:new()
+    self.__linked  = __lhm_list:new()
 end
 
 function map:find(k)
@@ -104,17 +251,16 @@ function map:find(k)
     if (node == nil) then
         return self:xend()
     else
-        if (self.__mutable == true) then
-            self.__linked:push_back(node:get())
-            self.__linked:erase(node)
-            self.__htable[k] = self:xend() - 1
-        end
-        return self.__htable[k]
+        return __lhm_iterator:new(self.__linked, node)
     end
 end
 
 function map:count(k)
-    return (self:xend() == self:find(k)) and 0 or 1
+    if (self:xend() == self:find(k)) then
+        return 0
+    else
+        return 1
+    end
 end
 
 function map:__len()
