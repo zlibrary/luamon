@@ -95,6 +95,10 @@ end
 --- 链表定义
 local list = newclass("list", require("luamon.container.traits.container"))
 
+function list:iterator()
+    return __list_iterator
+end
+
 function list:xbegin()
     return __list_iterator:new(self, self.__node[2])
 end
@@ -191,6 +195,9 @@ function list:assign(obj)
 end
 
 function list:__insert_aux(p, v)
+    if (p == nil) then
+        p = self.__node
+    end
     self.__size = self.__size + 1
     local node = 
     {
