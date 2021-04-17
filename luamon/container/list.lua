@@ -92,87 +92,8 @@ function __list_iterator:__sub(n)
 end
 
 -------------------------------------------------------------------------------
---- 链表定义(内部)
-local __list_base = newclass("__list_base", require("luamon.container.traits.container"))
-
-function __list_base:init()
-    self.super:init("sequential")
-    self.__node = {}
-    self.__size = 0
-    self.__node[1] = self.__node
-    self.__node[2] = self.__node
-end
-
-function __list_base:capacity()
-    return 0x7FFFFFFF
-end
-
-function __list_base:size()
-    return self.__size
-end
-
-function __list_base:empty()
-    return self.__size == 0
-end
-
-function __list_base:clear()
-    self.__node = {}
-    self.__size = 0
-    self.__node[1] = self.__node
-    self.__node[2] = self.__node
-end
-
-function __list_base:__insert_aux(p, v)
-    self.__size = self.__size + 1
-    local node = 
-    {
-        [1] = p[1],
-        [2] = p,
-        [3] = v,
-    }
-    p[1][2] = node
-    p[1]    = node
-    return node
-end
-
-function __list_base:__erase_aux(p)
-    if (p == self.__node) then
-        return p
-    else
-        p[1][2] = p[2]
-        p[2][1] = p[1]
-        self.__size = self.__size - 1
-        return p[2]
-    end
-end
-
-function __list_base:front()
-    return self.__node[2][3]
-end
-
-function __list_base:back()
-    return self.__node[1][3]
-end
-
-function __list_base:push_front(v)
-    self:__insert_aux(self.__node[2], v)
-end
-
-function __list_base:pop_front()
-    self:__erase_aux(self.__node[2])
-end
-
-function __list_base:push_back(v)
-    self:__insert_aux(self.__node, v)
-end
-
-function __list_base:pop_back()
-    self:__erase_aux(self.__node[1])
-end
-
--------------------------------------------------------------------------------
 --- 链表定义
-local list = newclass("list", __list_base)
+local list = newclass("list", require("luamon.container.traits.container"))
 
 function list:xbegin()
     return __list_iterator:new(self, self.__node[2])
@@ -191,7 +112,12 @@ function list:rend()
 end
 
 function list:init(obj)
-    self.super:init()
+    self.super:init("sequential")
+    self.__node = {}
+    self.__size = 0
+    self.__node[1] = self.__node
+    self.__node[2] = self.__node
+    -- 填充链表
     obj = obj or {}
     if (type(obj) == "table") then
         if (list:super():made(obj) == true) then
@@ -206,6 +132,25 @@ function list:init(obj)
     else
         error(string.format("'%s[%s]' isn't valid argument for type 'table'.", tostring(obj), type(obj)))
     end
+end
+
+function list:capacity()
+    return 0x7FFFFFFF
+end
+
+function list:size()
+    return self.__size
+end
+
+function list:empty()
+    return (self.__size == 0)
+end
+
+function list:clear()
+    self.__node = {}
+    self.__size = 0
+    self.__node[1] = self.__node
+    self.__node[2] = self.__node
 end
 
 function list:resize(n, v)
@@ -245,6 +190,30 @@ function list:assign(obj)
     end
 end
 
+function list:__insert_aux(p, v)
+    self.__size = self.__size + 1
+    local node = 
+    {
+        [1] = p[1],
+        [2] = p,
+        [3] = v,
+    }
+    p[1][2] = node
+    p[1]    = node
+    return node
+end
+
+function list:__erase_aux(p)
+    if (p == self.__node) then
+        return p
+    else
+        p[1][2] = p[2]
+        p[2][1] = p[1]
+        self.__size = self.__size - 1
+        return p[2]
+    end
+end
+
 function list:insert(pos, v)
     if (pos.class == __list_iterator) and (pos.__obj == self) then
         self:__insert_aux(pos.__node, v)
@@ -259,6 +228,30 @@ function list:erase(pos)
     else
         error(string.format("'%s[%s]' is invalid argument for type 'iterator'.", tostring(pos), type(pos)))
     end
+end
+
+function list:front()
+    return self.__node[2][3]
+end
+
+function list:back()
+    return self.__node[1][3]
+end
+
+function list:push_front(v)
+    self:__insert_aux(self.__node[2], v)
+end
+
+function list:pop_front()
+    self:__erase_aux(self.__node[2])
+end
+
+function list:push_back(v)
+    self:__insert_aux(self.__node, v)
+end
+
+function list:pop_back()
+    self:__erase_aux(self.__node[1])
 end
 
 function list:__len()
