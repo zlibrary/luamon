@@ -6,32 +6,6 @@ local algorithm = require "luamon.container.algorithm"
 local iterator  = require "luamon.container.iterator"
 
 -------------------------------------------------------------------------------
-
-local function __list_insert_aux(this, p, v)
-    this.__size = this.__size + 1
-    local node = 
-    {
-        [1] = p[1],
-        [2] = p,
-        [3] = v,
-    }
-    p[1][2] = node
-    p[1]    = node
-    return node
-end
-
-local function __list_erase_aux(this, p)
-    if (p == this.__node) then
-        return p
-    else
-        p[1][2] = p[2]
-        p[2][1] = p[1]
-        this.__size = this.__size - 1
-        return p[2]
-    end
-end
-
--------------------------------------------------------------------------------
 --- 迭代器（正向）
 local __list_iterator = newclass("__list_iterator", require("luamon.container.traits.iterator"))
 
@@ -121,6 +95,10 @@ end
 --- 链表定义
 local list = newclass("list", require("luamon.container.traits.container"))
 
+function list:iterator()
+    return __list_iterator
+end
+
 function list:xbegin()
     return __list_iterator:new(self, self.__node[2])
 end
@@ -139,12 +117,13 @@ end
 
 function list:init(obj)
     self.super:init("sequential")
+    self.__node = {}
+    self.__size = 0
+    self.__node[1] = self.__node
+    self.__node[2] = self.__node
+    -- 填充链表
     obj = obj or {}
     if (type(obj) == "table") then
-        self.__node = {}
-        self.__size = 0
-        self.__node[1] = self.__node
-        self.__node[2] = self.__node
         if (list:super():made(obj) == true) then
             assert(obj.is_sequential(), string.format("'%s' isn't sequential contianer.", tostring(obj)))
         end
@@ -168,7 +147,14 @@ function list:size()
 end
 
 function list:empty()
-    return (self:size() == 0)
+    return (self.__size == 0)
+end
+
+function list:clear()
+    self.__node = {}
+    self.__size = 0
+    self.__node[1] = self.__node
+    self.__node[2] = self.__node
 end
 
 function list:resize(n, v)
@@ -189,23 +175,13 @@ function list:resize(n, v)
     end
 end
 
-function list:front()
-    return self.__node[2][3]
-end
-
-function list:back()
-    return self.__node[1][3]
-end
-
 function list:assign(obj)
     obj = obj or {}
     if (type(obj) == "table") then
-        self.__node = {}
-        self.__size = 0
-        self.__node[1] = self.__node
-        self.__node[2] = self.__node
         if (list:super():made(obj) == true) then
             assert(obj.is_sequential(), string.format("'%s' isn't sequential contianer.", tostring(obj)))
+        else
+            self:clear()
         end
         local curr = iterator:xbegin(obj)
         local last = iterator:xend(obj)
@@ -218,9 +194,36 @@ function list:assign(obj)
     end
 end
 
+function list:__insert_aux(p, v)
+    if (p == nil) then
+        p = self.__node
+    end
+    self.__size = self.__size + 1
+    local node = 
+    {
+        [1] = p[1],
+        [2] = p,
+        [3] = v,
+    }
+    p[1][2] = node
+    p[1]    = node
+    return node
+end
+
+function list:__erase_aux(p)
+    if (p == self.__node) then
+        return p
+    else
+        p[1][2] = p[2]
+        p[2][1] = p[1]
+        self.__size = self.__size - 1
+        return p[2]
+    end
+end
+
 function list:insert(pos, v)
     if (pos.class == __list_iterator) and (pos.__obj == self) then
-        __list_insert_aux(self, pos.__node, v)
+        self:__insert_aux(pos.__node, v)
     else
         error(string.format("'%s[%s]' is invalid argument for type 'iterator'.", tostring(pos), type(pos)))
     end
@@ -228,33 +231,34 @@ end
 
 function list:erase(pos)
     if (pos.class == __list_iterator) and (pos.__obj == self) then
-        __list_erase_aux(self, pos.__node)
+        self:__erase_aux(pos.__node)
     else
         error(string.format("'%s[%s]' is invalid argument for type 'iterator'.", tostring(pos), type(pos)))
     end
 end
 
-function list:clear()
-    self.__node = {}
-    self.__size = 0
-    self.__node[1] = self.__node
-    self.__node[2] = self.__node
+function list:front()
+    return self.__node[2][3]
+end
+
+function list:back()
+    return self.__node[1][3]
 end
 
 function list:push_front(v)
-    __list_insert_aux(self, self.__node[2], v)
+    self:__insert_aux(self.__node[2], v)
 end
 
 function list:pop_front()
-    __list_erase_aux(self, self.__node[2])
+    self:__erase_aux(self.__node[2])
 end
 
 function list:push_back(v)
-    __list_insert_aux(self, self.__node, v)
+    self:__insert_aux(self.__node, v)
 end
 
 function list:pop_back()
-    __list_erase_aux(self, self.__node[1])
+    self:__erase_aux(self.__node[1])
 end
 
 function list:__len()
