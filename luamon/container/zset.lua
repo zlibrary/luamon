@@ -6,12 +6,30 @@ local algorithm = require "luamon.container.algorithm"
 local iterator  = require "luamon.container.iterator"
 
 -------------------------------------------------------------------------------
+--- 跳表
 local __skiplist = newclass("__skiplist", require("luamon.container.traits.container"))
 local __skiplist_max_level = 32
 
+local function __skiplist_node_new(level, value)
+    local node = 
+    {
+        value = value,
+        links = {},
+    }
+    for i = 1, level do
+        node.links[i] = 
+        {
+            span = 0,
+            prev = node,
+            next = node,
+        }
+    end
+    return node
+end
+
 local function __skiplist_random_level()
     local level = 1
-    while(math.random(1, 1000) < 250) do
+    while(math.random() < 0.25) do
         level = level + 1
     end
     return math.min(__skiplist_max_level, level)
@@ -34,18 +52,7 @@ function __skiplist:init(kcompare, kextract)
     self.kextract = kextract
     self.__level  = 1
     self.__count  = 0
-    self.__header = 
-    {
-        links = {},
-        value = nil
-    }
-    for i = 1, __skiplist_max_level do
-        local node = {}
-        node.span = 0
-        node.prev = node
-        node.next = node
-        self.__header.links[i] = node
-    end
+    self.__header = __skiplist_node_new(__skiplist_max_level)
 end
 
 function __skiplist:capacity()
@@ -63,20 +70,7 @@ end
 function __skiplist:clear()
     self.__level  = 1
     self.__count  = 0
-    self.__header = 
-    {
-        links = {},
-        value = nil
-    }
-    for i = 1, __skiplist_max_level do
-        local node = 
-        {
-            prev = self.__header,
-            next = self.__header,
-            span = 0,
-        }
-        self.__header.links[i] = node
-    end
+    self.__header = __skiplist_node_new(__skiplist_max_level)
 end
 
 function __skiplist:insert(v)
@@ -88,27 +82,85 @@ function __skiplist:insert(v)
         self.__level = level
     end
     -- 查找可插入点
-    local x = self.__header.links[level]
-    local e = self.__header.links[level]
+    local x = self.__header
+    local e = self.__header
     for i = level, 1, -1 do
-        -- 更新排名记录
-        if (i == level) then
-            rank[i] = 0
-        else
+        if (i < level) then
             rank[i] = rank[i + 1]
+        else
+            rank[i] = 0
         end
+        -- 查找可插入点（当前等级）
+        while(true) do
+            local p = x.links[i].next
+            if (p == e) or (self.kcompare(self.kextract(v), p.value) == false) then
+                e = p
+                break
+            else
+                x = p
+                rank[i] = rank[i] + x.links[i].span
+            end
+        end
+        xpos[i] = e
+    end
+    -- 插入目标节点
+    local p = __skiplist_node_new(level, v)
+    for i = 1, level do
+        local x = xpos[i].prev
+        local e = xpos[i]
+        x.links[i].next = p
+        e.links[i].prev = p
+        p.links[i].prev = x
+        p.links[i].next = e
+        p.linls[i].span = rank[1] - rank[i] + 1 
+    end
+    self.__count = self.__count + 1
+    return p
+end
+
+function __skiplist:erase(p)
+    if (p == self.__header) then
+        return p
+    end
+    -- 删除目标节点
+    for i = 1, __skiplist_max_level do
+        if (p.links[i] == nil) then
+            break
+        end
+        local x = p.links[i].prev
+        local e = p.links[i].next
+        x.links[i].next = e
+        e.links[i].prev = x
+        if (e ~= self.__header) then
+            e.links[i].span = e.links[1].span + p.links[i].span - 1
+        end
+    end
+    self.__count = self.__count - 1
+    return p.links[1].next
+end
+
+function __skiplist:lower_bound(k)
+    local x = self.__header
+    local e = self.__header
+    for i = self.__level, 1, -1 do
+        while(true) do
+            local p = x.links[i].next
+            if (p == e) or 
 
 
-    local x = self.__header.links[self.__level]
-    local e = self.__header.links[self.__level]
-    for i = 
-
-
-
-
-
-
-
+        -- 查找可插入点（当前等级）
+        while(true) do
+            local p = x.links[i].next
+            if (p == e) or (self.kcompare(self.kextract(v), p.value) == false) then
+                e = p
+                break
+            else
+                x = p
+                rank[i] = rank[i] + x.links[i].span
+            end
+        end
+        xpos[i] = e
+    end
 
 
 
