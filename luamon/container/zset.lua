@@ -139,28 +139,58 @@ function __skiplist:erase(p)
     return p.links[1].next
 end
 
+function __skiplist:rank(p)
+    
+
+end
+
+function __skiplist:find(k)
+    local p = self:lower_bound(k)
+    local e = self.__header
+    if (p == e) or (self.kcompare(k, self.kextract(p.value))) then
+        return e
+    else
+        return p
+    end
+end
+
 function __skiplist:lower_bound(k)
     local x = self.__header
     local e = self.__header
     for i = self.__level, 1, -1 do
         while(true) do
             local p = x.links[i].next
-            if (p == e) or 
-
-
-        -- 查找可插入点（当前等级）
-        while(true) do
-            local p = x.links[i].next
-            if (p == e) or (self.kcompare(self.kextract(v), p.value) == false) then
+            if (p == e) or (self.kcompare(self.kextract(p.value), k) == false) then
                 e = p
                 break
             else
                 x = p
-                rank[i] = rank[i] + x.links[i].span
             end
         end
-        xpos[i] = e
     end
+    return e
+end
+
+function __skiplist:upper_bound(k)
+    local x = self.__header
+    local e = self.__header
+    for i = self.__level, 1, -1 do
+        while(true) do
+            local p = x.links[i].next
+            if (p == e) or (self.kcompare(k, self.kextract(p.value)) == false) then
+                e = p
+                break
+            else
+                x = p
+            end
+        end
+    end
+    return e
+end
+
+
+
+
 
 
 
