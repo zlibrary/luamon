@@ -93,7 +93,7 @@ function __skiplist:insert(v)
         -- 查找可插入点（当前等级）
         while(true) do
             local p = x.links[i].next
-            if (p == e) or (self.kcompare(self.kextract(v), p.value) == false) then
+            if (p == e) or (self.kcompare(self.kextract(v), self.kextract(p.value)) == false) then
                 e = p
                 break
             else
@@ -106,14 +106,20 @@ function __skiplist:insert(v)
     -- 插入目标节点
     local p = __skiplist_node_new(level, v)
     for i = 1, level do
-        local x = xpos[i].prev
+        local x = xpos[i].links[i].prev
         local e = xpos[i]
         x.links[i].next = p
         e.links[i].prev = p
         p.links[i].prev = x
         p.links[i].next = e
-        p.linls[i].span = rank[1] - rank[i] + 1 
+        p.links[i].span = rank[1] - rank[i] + 1 
     end
+
+    print(string.format("%s : k = %s, v = %s", p, v[1], v[2]))
+    for i = 1, level do
+        print("    ", p.links[i].span, p.links[i].prev, p.links[i].next)
+    end
+
     self.__count = self.__count + 1
     return p
 end
@@ -151,7 +157,7 @@ function __skiplist:at(n)
                 break
             else
                 x = p
-                v = v + x.link[i].span
+                v = v + x.links[i].span
             end
         end
     end
@@ -169,6 +175,7 @@ function __skiplist:rank(p)
             end
         end
     end
+    print("rank : ", p, v)
     return v
 end
 
@@ -261,7 +268,7 @@ function __zmap_iterator:distance(other)
     end
 end
 
-function __zmap_iterator:__eq(oher)
+function __zmap_iterator:__eq(other)
     return (other.class == __zmap_iterator) and (self.inst == other.inst) and (self.node == other.node)
 end
 
@@ -406,3 +413,43 @@ function zmap:rank(k)
 end
 
 function zmap:find(k)
+    local p = self.__htable[k]
+    if (p == nil) then
+        return self:xend()
+    else
+        return __zmap_iterator:new(self.__linked, p)
+    end
+end
+
+function zmap:lower_bound(v)
+    return __zmap_iterator:new(self.__linked, self.__linked:lower_bound(v))
+end
+
+function zmap:upper_bound(v)
+    return __zmap_iterator:new(self.__linked, self.__linked:upper_bound(v))
+end
+
+function zmap:equal_range(v)
+    return { self:lower_bound(v), self:upper_bound(v) }
+end
+
+function zmap:__len()
+    return self:size()
+end
+
+function zmap:__pairs()
+    local curr  = self:xbegin()
+    local xend  = self:xend()
+    local value = nil
+    return function()
+        if (curr == xend) then
+            return nil
+        else
+            value = curr:get()
+            curr:advance(1)
+            return value[1], value[2]
+        end
+    end
+end
+
+return zmap
