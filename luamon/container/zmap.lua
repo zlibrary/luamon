@@ -29,7 +29,7 @@ end
 
 local function __skiplist_random_level()
     local level = 1
-    while(math.random() < 0.25) do
+    while(math.random() < 0.5) do
         level = level + 1
     end
     return math.min(__skiplist_max_level, level)
@@ -73,6 +73,8 @@ function __skiplist:clear()
     self.__header = __skiplist_node_new(__skiplist_max_level)
 end
 
+local max = 0
+
 function __skiplist:insert(v)
     local rank  = {}
     local xpos  = {}
@@ -80,12 +82,14 @@ function __skiplist:insert(v)
     local level = __skiplist_random_level()
     if (self.__level < level) then
         self.__level = level
+        print("level = ", level)
     end
     -- 查找可插入点
     local x = self.__header
     local e = self.__header
-    for i = level, 1, -1 do
-        if (i < level) then
+    local n = 0
+    for i = self.__level, 1, -1 do
+        if (i < self.__level) then
             rank[i] = rank[i + 1]
         else
             rank[i] = 0
@@ -93,34 +97,35 @@ function __skiplist:insert(v)
         -- 查找可插入点（当前等级）
         while(true) do
             local p = x.links[i].next
-            if (p == e) or (self.kcompare(self.kextract(v), self.kextract(p.value)) == false) then
+            -- if (p == e) or (self.kcompare(self.kextract(v), self.kextract(p.value)) == true) then
+            if (p == e) then
                 e = p
                 break
             else
                 x = p
                 rank[i] = rank[i] + x.links[i].span
             end
+            n = n + 1
         end
         xpos[i] = e
+    end
+    if n > max then
+        max = n
+        print(n)
     end
     -- 插入目标节点
     local p = __skiplist_node_new(level, v)
     for i = 1, level do
         local x = xpos[i].links[i].prev
         local e = xpos[i]
+        local v = rank[1] - rank[i] + 1
         x.links[i].next = p
         e.links[i].prev = p
         p.links[i].prev = x
         p.links[i].next = e
-        p.links[i].span = rank[1] - rank[i] + 1 
+        p.links[i].span = v
     end
-
-    print(string.format("%s : k = %s, v = %s", p, v[1], v[2]))
-    for i = 1, level do
-        print("    ", p.links[i].span, p.links[i].prev, p.links[i].next)
-    end
-
-    self.__count = self.__count + 1
+    self.__count = (self.__count + 1)
     return p
 end
 
@@ -128,20 +133,38 @@ function __skiplist:erase(p)
     if (p == self.__header) then
         return p
     end
-    -- 删除目标节点
+    -- 记录后继节点
+    local xpos = {}
     for i = 1, self.__level do
         if (p.links[i] == nil) then
-            break
-        end
-        local x = p.links[i].prev
-        local e = p.links[i].next
-        x.links[i].next = e
-        e.links[i].prev = x
-        if (e ~= self.__header) then
-            e.links[i].span = e.links[1].span + p.links[i].span - 1
+            local x = xpos[i - 1]
+            while(true) do
+                if (x.links[i] ~= nil) then
+                    break
+                else
+                    x = x.links[i - 1].next
+                end
+            end
+            xpos[i] = x
+        else
+            xpos[i] = p.links[i].next
         end
     end
-    self.__count = self.__count - 1
+    -- 移除目标节点
+    for i = 1, self.__level do
+        local x = xpos[i]
+        local v = 0
+        if (x.links[i].prev == p) then
+            local z = p.links[i].prev
+            z.links[i].next = x
+            x.links[i].prev = z
+            v = p.links[i].span
+        end
+        if (x ~= self.__header) then
+            x.links[i].span = x.links[i].span + (v - 1)
+        end
+    end
+    self.__count = (self.__count - 1)
     return p.links[1].next
 end
 
@@ -153,7 +176,6 @@ function __skiplist:at(n)
         while(true) do
             local p = x.links[i].next
             if (p == e) or (n < (v + p.links[i].span)) then
-                e = p
                 break
             else
                 x = p
@@ -161,7 +183,7 @@ function __skiplist:at(n)
             end
         end
     end
-    return x
+    return (v == n) and x or e
 end
 
 function __skiplist:rank(p)
@@ -175,7 +197,6 @@ function __skiplist:rank(p)
             end
         end
     end
-    print("rank : ", p, v)
     return v
 end
 
@@ -212,7 +233,7 @@ function __skiplist:upper_bound(k)
     for i = self.__level, 1, -1 do
         while(true) do
             local p = x.links[i].next
-            if (p == e) or (self.kcompare(k, self.kextract(p.value)) == false) then
+            if (p == e) or (self.kcompare(k, self.kextract(p.value)) == true) then
                 e = p
                 break
             else
@@ -240,7 +261,13 @@ end
 function __zmap_iterator:advance(n)
     local nm = math.tointeger(n)
     if nm then
-        self.node = self.inst:at(self.inst:rank(self.node) + nm)
+        local rank = self.inst:rank(self.node)
+        if (rank == 0) then
+            rank = self.inst:size() + nm + 1
+        else
+            rank = rank + nm
+        end
+        self.node = self.inst:at(rank)
     else
         error(string.format("'%s[%s]' is invalid argument for type 'integer'.", tostring(n), type(n)))
     end
@@ -262,7 +289,13 @@ function __zmap_iterator:distance(other)
     if (other.class == __zmap_iterator) and (self.inst == other.inst) then
         local v1 = self.inst:rank( self.node)
         local v2 = self.inst:rank(other.node)
-        return (v2 - v2)
+        if (v1 == 0) then
+            v1 = self.inst:size() + 1
+        end
+        if (v2 == 0) then
+            v2 = self.inst:size() + 1
+        end
+        return (v2 - v1)
     else
         error(string.format("'%s[%s]' not match 'iterator:distance()'.", tostring(other), type(other)))
     end
@@ -349,7 +382,7 @@ end
 
 function zmap:set(k, v)
     local p = self.__htable[k]
-    if (p ~= nil) then
+    if (p == nil) then
         self.__htable[k] = self.__linked:insert({k, v})
     else
         self.__linked:erase(p) 
@@ -370,7 +403,7 @@ end
 function zmap:erase(pos)
     local k = nil
     local p = nil
-    if (__zmap_iterator:made(pos) == true) and (pos.inst == self) then
+    if (__zmap_iterator:made(pos) == true) and (pos.inst == self.__linked) then
         if (pos == self:xend()) then
             return
         else
