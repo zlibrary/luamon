@@ -299,16 +299,6 @@ function __zmap_iterator:advance(n)
         else
             self.node = self.inst.__header
         end
-
-
-
-        -- local rank = self.inst:rank(self.node)
-        -- if (rank == 0) then
-        --     rank = self.inst:size() + nm + 1
-        -- else
-        --     rank = rank + nm
-        -- end
-        -- self.node = self.inst:at(rank)
     else
         error(string.format("'%s[%s]' is invalid argument for type 'integer'.", tostring(n), type(n)))
     end
