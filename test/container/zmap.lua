@@ -284,7 +284,7 @@ function mytest.testD()
     do
         local mymap = zmap:new()
         for i = 1, 1000000 do
-            mymap:insert(i, math.random(1, 10000))
+            mymap:insert(i, i)
         end
         -- mytest:assert_eq(mymap:size(), 1000000)
         -- mytest:assert_true(is_sequential(mymap))

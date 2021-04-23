@@ -29,7 +29,7 @@ end
 
 local function __skiplist_random_level()
     local level = 1
-    while(math.random() < 0.5) do
+    while(math.random() < 0.25) do
         level = level + 1
     end
     return math.min(__skiplist_max_level, level)
@@ -73,8 +73,6 @@ function __skiplist:clear()
     self.__header = __skiplist_node_new(__skiplist_max_level)
 end
 
-local max = 0
-
 function __skiplist:insert(v)
     local rank  = {}
     local xpos  = {}
@@ -82,12 +80,11 @@ function __skiplist:insert(v)
     local level = __skiplist_random_level()
     if (self.__level < level) then
         self.__level = level
-        print("level = ", level)
     end
     -- 查找可插入点
     local x = self.__header
     local e = self.__header
-    local n = 0
+    local k = self.kextract(v)
     for i = self.__level, 1, -1 do
         if (i < self.__level) then
             rank[i] = rank[i + 1]
@@ -97,21 +94,15 @@ function __skiplist:insert(v)
         -- 查找可插入点（当前等级）
         while(true) do
             local p = x.links[i].next
-            -- if (p == e) or (self.kcompare(self.kextract(v), self.kextract(p.value)) == true) then
-            if (p == e) then
+            if (p == e) or (self.kcompare(k, self.kextract(p.value)) == true) then
                 e = p
                 break
             else
                 x = p
                 rank[i] = rank[i] + x.links[i].span
             end
-            n = n + 1
         end
         xpos[i] = e
-    end
-    if n > max then
-        max = n
-        print(n)
     end
     -- 插入目标节点
     local p = __skiplist_node_new(level, v)
