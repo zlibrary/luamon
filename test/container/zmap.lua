@@ -8,14 +8,15 @@ local zmap      = require 'luamon.container.zmap'
 local function is_sequential(mymap)
     local iter1 = mymap:xbegin()
     local iter2 = iter1 + 1
-    while(iter2 ~= mymap:xend()) do
+    local iter3 = mymap:xend()
+    while(iter2 ~= iter3) do
         local v1 = iter1:get()
         local v2 = iter2:get()
         if mymap.__linked.kcompare(v2[2], v1[2]) then
             return false
         end
-        iter1 = iter2
-        iter2 = iter1 + 1
+        iter1:advance(1)
+        iter2:advance(1)
     end
     return true
 end
@@ -283,11 +284,49 @@ end
 function mytest.testD()
     do
         local mymap = zmap:new()
+        for i = 1, 5 do
+            mymap:insert(i, i)
+        end
+        mytest:assert_eq(mymap:size(), 5)
+        mytest:assert_true(is_sequential(mymap))
+
+        local iter = mymap:xbegin()
+        iter:advance(-1)
+        mytest:assert_eq(iter, mymap:xend())
+
+        local iter = mymap:xbegin()
+        iter:advance(-2)
+        mytest:assert_eq(iter, mymap:xend())
+
+        local iter = mymap:xbegin()
+        iter:advance(5)
+        mytest:assert_eq(iter, mymap:xend())
+
+        local iter = mymap:xbegin()
+        iter:advance(6)
+        mytest:assert_eq(iter, mymap:xend())
+
+        local iter = mymap:xbegin()
+        iter:advance(4)
+        mytest:assert_eq(5, iter:get()[1])
+
+        local iter1 = mymap:xbegin()
+        local iter2 = mymap:xend()
+        iter1:advance( 4)
+        iter2:advance(-1)
+        mytest:assert_eq(iter1, iter2)
+
+    end
+end
+
+function mytest.testE()
+    do
+        local mymap = zmap:new()
         for i = 1, 1000000 do
             mymap:insert(i, i)
         end
-        -- mytest:assert_eq(mymap:size(), 1000000)
-        -- mytest:assert_true(is_sequential(mymap))
+        mytest:assert_eq(mymap:size(), 1000000)
+        mytest:assert_true(is_sequential(mymap))
     end
 end
 

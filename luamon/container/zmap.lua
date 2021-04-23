@@ -252,13 +252,63 @@ end
 function __zmap_iterator:advance(n)
     local nm = math.tointeger(n)
     if nm then
-        local rank = self.inst:rank(self.node)
-        if (rank == 0) then
-            rank = self.inst:size() + nm + 1
-        else
-            rank = rank + nm
+        local x = self.inst.__header
+        local e = self.inst.__header
+        local p = self.node
+        local m = 1
+        for i = self.inst.__level, 1, -1 do
+            if (p.links[i] ~= nil) then
+                m = i
+                break
+            end
         end
-        self.node = self.inst:at(rank)
+        if (p == e) and (nm > 0) then
+            return
+        end
+        if (p == e) and (nm < 0) then
+            nm = self.inst:size() + nm + 1
+        end
+        for i = m, 1, -1 do
+            while (true) do
+                if (nm == 0) then
+                    break
+                end
+                if (nm > 0) then
+                    local z = p.links[i].next
+                    if (z == e) or ((nm - z.links[i].span) < 0) then
+                        e = z
+                        break
+                    else
+                        nm = nm - z.links[i].span
+                        p  = z
+                    end
+                else
+                    local z = p.links[i].prev
+                    if (z == x) or ((nm + p.links[i].span) < 0) then
+                        x = z
+                        break
+                    else
+                        nm = nm + p.links[i].span
+                        p  = z
+                    end
+                end
+            end
+        end
+        if (nm == 0) then
+            self.node = p
+        else
+            self.node = self.inst.__header
+        end
+
+
+
+        -- local rank = self.inst:rank(self.node)
+        -- if (rank == 0) then
+        --     rank = self.inst:size() + nm + 1
+        -- else
+        --     rank = rank + nm
+        -- end
+        -- self.node = self.inst:at(rank)
     else
         error(string.format("'%s[%s]' is invalid argument for type 'integer'.", tostring(n), type(n)))
     end
