@@ -1,14 +1,14 @@
 -------------------------------------------------------------------------------
---- 缓存数据擦除接口描述
+--- 缓存数据时钟接口描述
 -------------------------------------------------------------------------------
 require "luamon"
 
 -------------------------------------------------------------------------------
-local eraser = newclass("luamon.cache.eraser")
+local ticker = newclass("luamon.cache.ticker")
 
--- 数据移除通知
-function eraser:exec(key, value)
-    error("this function must overwrite!")
+-- 获取当前时间(秒)
+function ticker:time()
+    return os.time()
 end
 
-return eraser
+return ticker

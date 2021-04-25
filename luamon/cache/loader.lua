@@ -1,14 +1,14 @@
 -------------------------------------------------------------------------------
---- 缓存数据擦除接口描述
+--- 缓存数据加载接口描述
 -------------------------------------------------------------------------------
 require "luamon"
 
 -------------------------------------------------------------------------------
-local eraser = newclass("luamon.cache.eraser")
+local loader = newclass("luamon.cache.loader")
 
--- 数据移除通知
-function eraser:exec(key, value)
+-- 数据加载通知
+function loader:load(key)
     error("this function must overwrite!")
 end
 
-return eraser
+return loader
