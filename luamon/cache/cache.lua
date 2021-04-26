@@ -194,28 +194,28 @@ function cache:capacity()
 end
 
 function cache:size()
-    return self.lhm:size()
+    return self.mcache:size()
 end
 
 function cache:empty()
-    return self.lhm:empty()
+    return self.mcache:empty()
 end
 
 function cache:clear()
 end
 
 function cache:evict(key)
-    local ref = (self.mcache:get(key) or {}).reference
+    local ref = self.mcache:get(key)
     if (ref == nil) then
-        -- 目标不存在(操作目标不存在,不执行移除操作)
+        -- 目标不存在(操作目标不存在,放弃移除操作)
         return
     end
     if (__reference_is_loading(ref) == true) then
-        -- 目标加载中(与当前操作无关,不执行移除操作)
+        -- 目标加载中(与当前操作无关,放弃移除操作)
         return
     end
     if (__reference_is_removing(ref) == true) then
-        -- 目标移除中(等待操作完成,确保操作顺序)
+        -- 目标移除中(需等待操作完成,确保操作顺序)
         __reference_wait(ref)
     else
         -- 执行移除操作
@@ -225,6 +225,42 @@ function cache:evict(key)
 end
 
 function cache:get(key, unload)
+    local value = nil
+    while(true) do
+        local ref = self.mcache:get(key)
+        if (ref == nil) and (not unload) then
+            ref = __reference_new_object(self, key)
+            self.mcache:insert(key, ref)
+            __reference_load(ref)
+            if __reference_is_abnormal(ref) then
+                ref = nil
+                self.mcache:erase(key)
+            end
+        end
+        if (__reference_is_loading(ref) or __reference_is_removing(ref)) then
+            __reference_wait(ref)
+        else
+            if (__reference_is_expired(ref)  == true) then
+                __reference_load(ref)
+            end
+            if (__reference_is_abnormal(ref) == true) then
+                value = nil
+                break
+            else
+                value = __reference_get_value(ref)
+                break
+            end
+        end
+    end
+    if (self.capacity > 0) and (self.mcache:size() < self.capacity) then
+        -- 移除溢出数据
+    end
+    return value
+end
+
+            
+
+
     local obj = self.mcache[key]
     if (obj == nil) and (not unload) then
         obj = {}
