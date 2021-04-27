@@ -202,7 +202,7 @@ function map:get(k)
         local v = node[3]
         if (self.__mutable == true) then
             self.__linked:erase(node)
-            self.__linked:push_back(v)
+            self.__htable[k] = self.__linked:push_back(v)
         end
         return v[2]
     end
