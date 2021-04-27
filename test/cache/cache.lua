@@ -54,6 +54,19 @@ function mytest.testA()
 
         mytest:assert_eq(1, mycache:get(29, function(key) return 1 end))
         mytest:assert_eq(1, mycache:get(29))
+
+        mycache:put(1, 2)
+        mytest:assert_eq(2, mycache:get(1))
+
+        mycache:evict(1)
+        mytest:assert_eq(15, mycache:size())
+
+        mycache:evict(2)
+        mytest:assert_eq(14, mycache:size())
+
+        mycache:evict(3)
+        mytest:assert_eq(14, mycache:size())
+
     end
 
 end
