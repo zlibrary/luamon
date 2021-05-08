@@ -113,7 +113,7 @@ end
 
 -------------------------------------------------------------------------------
 --- 队列定义
-local deque = newclass("deque", require("luamon.container.traits.container"))
+local deque = newclass("luamon.container.deque", require("luamon.container.traits.container"))
 
 local function __initialize_deque(deque, first, last)
     deque.__sections = {[1] = {}}

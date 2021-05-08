@@ -6,7 +6,7 @@ local container = require "luamon.container.traits.container"
 
 -------------------------------------------------------------------------------
 --- 迭代器（反向）
-local reverse_iterator = newclass("reverse_iterator", require("luamon.container.traits.iterator"))
+local reverse_iterator = newclass("luamon.container.reverse_iterator", require("luamon.container.traits.iterator"))
 
 function reverse_iterator:init(iterator)
     self.super:init(iterator:name())
@@ -69,7 +69,7 @@ end
 
 -------------------------------------------------------------------------------
 --- 迭代器（'table')
-local table_iterator = newclass("table_iterator", require("luamon.container.traits.iterator"))
+local table_iterator = newclass("luanom.container.table_iterator", require("luamon.container.traits.iterator"))
 
 function table_iterator:init(tbl, idx)
     self.super:init("random-access")

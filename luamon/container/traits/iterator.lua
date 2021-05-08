@@ -31,7 +31,7 @@ function __iterator_tag_bidirectional:name()
 end
 
 -------------------------------------------------------------------------------
-local iterator_traits = newclass("iterator_traits")
+local iterator_traits = newclass("luamon.container.traits.iterator_traits")
 
 iterator_traits.categorys = 
 {

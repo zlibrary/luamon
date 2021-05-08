@@ -85,7 +85,7 @@ end
 
 -------------------------------------------------------------------------------
 --- 容器定义（定长数组）
-local array = newclass("array", require("luamon.container.traits.container"))
+local array = newclass("luamon.container.array", require("luamon.container.traits.container"))
 
 function array:xbegin()
     return __array_iterator:new(self, 1)

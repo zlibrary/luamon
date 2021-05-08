@@ -8,7 +8,7 @@ local iterator  = require "luamon.container.iterator"
 
 -------------------------------------------------------------------------------
 --- 容器定义
-local map = newclass("map", require("luamon.container.traits.container"))
+local map = newclass("luamon.container.map", require("luamon.container.traits.container"))
 
 function map:xbegin()
     return self.__rbtree:xbegin()

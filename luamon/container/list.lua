@@ -119,7 +119,7 @@ end
 
 -------------------------------------------------------------------------------
 --- 链表定义
-local list = newclass("list", require("luamon.container.traits.container"))
+local list = newclass("luamon.container.list", require("luamon.container.traits.container"))
 
 function list:xbegin()
     return __list_iterator:new(self, self.__node[2])

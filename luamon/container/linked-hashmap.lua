@@ -157,7 +157,7 @@ end
 
 -------------------------------------------------------------------------------
 --- 容器定义
-local map = newclass("linked-hashmap", require("luamon.container.traits.container"))
+local map = newclass("luamon.container.linked-hashmap", require("luamon.container.traits.container"))
 
 function map:xbegin()
     return __lhm_iterator:new(self.__linked, self.__linked.__node[2])

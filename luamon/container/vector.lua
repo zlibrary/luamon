@@ -75,7 +75,7 @@ end
 
 -------------------------------------------------------------------------------
 --- 容器定义（变长数组）
-local vector = newclass("vector", require("luamon.container.traits.container"))
+local vector = newclass("luamon.container.vector", require("luamon.container.traits.container"))
 
 function vector:xbegin()
     return __vector_iterator:new(self, 1)

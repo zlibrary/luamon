@@ -360,7 +360,7 @@ end
 
 -------------------------------------------------------------------------------
 --- 有序集
-local zmap = newclass("zmap", require("luamon.container.traits.container"))
+local zmap = newclass("luamon.container.zmap", require("luamon.container.traits.container"))
 
 function zmap:xbegin()
     return __zmap_iterator:new(self.__linked, self.__linked.__header.links[1].next)

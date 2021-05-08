@@ -5,7 +5,7 @@ require "luamon"
 
 -------------------------------------------------------------------------------
 --- 栈定义
-local stack = newclass("stack")
+local stack = newclass("luamon.container.stack")
 
 function stack:init(obj)
     self.__deque = require("luamon.container.deque"):new(obj)

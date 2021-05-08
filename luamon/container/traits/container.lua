@@ -4,7 +4,7 @@
 require "luamon"
 
 -------------------------------------------------------------------------------
-local container_traits = newclass("container_traits")
+local container_traits = newclass("luamon.container.traits.container_traits")
 
 container_traits.categorys = 
 {

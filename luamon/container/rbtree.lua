@@ -535,7 +535,7 @@ end
 
 -------------------------------------------------------------------------------
 --- 红黑树
-local rbtree = newclass("rbtree", require("luamon.container.traits.container"))
+local rbtree = newclass("luamon.container.rbtree", require("luamon.container.traits.container"))
 
 function rbtree:xbegin()
     return __rbtree_iterator:new(self, self.header.lchild)

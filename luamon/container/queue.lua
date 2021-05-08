@@ -5,7 +5,7 @@ require "luamon"
 
 -------------------------------------------------------------------------------
 --- 队列定义
-local queue = newclass("queue")
+local queue = newclass("luamon.container.queue")
 
 function queue:init(obj)
     self.__deque = require("luamon.container.deque"):new(obj)

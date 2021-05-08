@@ -6,7 +6,7 @@ local algorithm = require "luamon.container.algorithm"
 
 -------------------------------------------------------------------------------
 --- 队列定义
-local queue = newclass("priority-queue")
+local queue = newclass("luamon.container.priority-queue")
 
 function queue:init(obj, compare)
     -- 调整比较逻辑
