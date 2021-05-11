@@ -48,15 +48,15 @@ local config =
         ['*'] = 
         {
             enter = function(event, source, target, ...)
-                print(string.format("%s ~ %s:%s enter.", event, source, target))
+                print(string.format("global ~ %s:%s enter.", source, target))
             end,
 
             exec = function(event, source, target, ...)
-                print(string.format("%s ~ %s:%s exec.", event, source, target))
+                print(string.format("global ~ %s:%s exec.", source, target))
             end,
 
             leave = function(event, source, target, ...)
-                print(string.format("%s ~%s:%s leave.", event, source, target))
+                print(string.format("global ~%s:%s leave.", source, target))
             end,
         },
 
