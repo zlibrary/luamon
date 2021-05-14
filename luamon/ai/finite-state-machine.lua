@@ -9,11 +9,11 @@ local finite_state_machine = newclass("luamon.ai.finite_state_machine")
 
 local __wildcard = '*'
 
-local function forward(context, event)
-    local state = context:state()
-    local to    = context.__transitions[state][event]
-    if (to == nil) and (context.__transitions[__wildcard] ~= nil) then
-        to = context.__transitions[__wildcard][event]
+local function forward(fsm, event)
+    local state = fsm:state()
+    local to    = fsm.__transitions[state][event]
+    if (to == nil) and (fsm.__transitions[__wildcard] ~= nil) then
+        to = fsm.__transitions[__wildcard][event]
     end
     if (to ~= __wildcard) then
         return to
@@ -22,10 +22,11 @@ local function forward(context, event)
     end
 end
 
-function finite_state_machine:init(transitions, states, events)
+function finite_state_machine:init(context, transitions, states, events)
     self.__transitions = {}
     self.__states      = {}
     self.__events      = {}
+    self.__context     = context
     self.__state       = 'none'
     self.__transiting  = false
     -- 导入状态配置
@@ -49,6 +50,10 @@ function finite_state_machine:init(transitions, states, events)
         end
         self.__states[name] = methods
     end
+    -- 全局状态修正
+    if (self.__states[__wildcard] == nil) then
+        self.__states[__wildcard] = {}
+    end
     -- 导入事件配置
     for name, data in pairs(events or {}) do
         if (type(name) ~= "string") or (name == "") then
@@ -69,6 +74,10 @@ function finite_state_machine:init(transitions, states, events)
             end
         end
         self.__events[name] = methods
+    end
+    -- 全局事件修正
+    if (self.__events[__wildcard] == nil) then
+        self.__events[__wildcard] = {}
     end
     -- 导入转换配置
     for _, transition in ipairs(transitions) do
@@ -156,7 +165,7 @@ function finite_state_machine:fire(event, ...)
     end
     target = forward(self, event)
     if type(target) == 'function' then
-        target = target(self,...)
+        target = target(self.__context, ...)
     end
     if (target == nil) then
         error(string.format("finite-state-machine[%s, %s] invalid event.", source, event))
@@ -167,25 +176,26 @@ function finite_state_machine:fire(event, ...)
     end
     -- 执行状态转换
     local retval     = true
-    local transitnum = 10
+    local transitnum = 11
     local transits   = 
     {
                                self.__events[__wildcard]['enter'],
                                self.__events[  event   ]['enter'],
-        (source ~= target) and self.__states[__wildcard]['leave'],
-        (source ~= target) and self.__states[  source  ]['leave'],
+        (source ~= target) and self.__states[__wildcard]['leave']   or nil,
+        (source ~= target) and self.__states[  source  ]['leave']   or nil,
+                               self.__events[__wildcard]['exec' ],
                                self.__events[  event   ]['exec' ],
-        (source ~= target) and function() self.__state = target end,
-        (source ~= target) and self.__states[__wildcard]['enter'],
-        (source ~= target) and self.__states[  target  ]['leave'],
+        (source ~= target) and function() self.__state = target end or nil,
+        (source ~= target) and self.__states[__wildcard]['enter']   or nil,
+        (source ~= target) and self.__states[  target  ]['leave']   or nil,
                                self.__events[__wildcard]['leave'],
                                self.__events[  event   ]['leave'],
     }
     self.__transiting = true
     for i = 1, transitnum do
         local fn = transits[i]
-        if (fn ~= nil) then
-            retval = fn(event, source, target, ...)
+        if fn ~= nil then
+            retval = fn(self.__context, event, source, target, ...)
             if (retval == false) then
                 break
             else
@@ -201,24 +211,17 @@ end
 --- 状态机生成模块
 return
 {
-    create = function(config)
+    create = function(context, params)
         -- 状态机生成参数检查
-        local transitions = config.transitions
-        local states      = config.states
-        local events      = config.events
-        local initial     = config.initial
-        local context     = config.context
+        local transitions = params.transitions
+        local states      = params.states
+        local events      = params.events
+        local initial     = params.initial
         if (initial == nil) or (initial == "") then
             initial = "none"
         end
-        if (type(initial) ~= "string") then
+        if (type(initial) ~= "string") or (initial == "") or (initial == __wildcard) then
             error(string.format("initial[%s:%s] is invalid.", tostring(initial), type(initial)))
-        end
-        if (context == nil) then
-            context = {}
-        end
-        if (type(context) ~= "table") then
-            error(string.format("context[%s:%s] is invalid.", tostring(context), type(context)))
         end
         if (states == nil) then
             states = {}
@@ -238,23 +241,58 @@ return
         if (#transitions == 0) then
             error("transitions is empty.")
         end
-        -- 构造初始转换配置
+        -- 构造初始转换配置（如果配置了初始状态，需要调用者自己构造下面的转换配置）
         if (initial ~= 'none') then
-            table.insert(transitions, { name = 'init', from = 'none', to = initial })
+            local exist = false
+            for _, transition in ipairs(transitions) do
+                if (transition.name == 'init') and (transition.from == 'none') then
+                    exist = true
+                    break
+                end
+            end
+            if (exist == false) then
+                table.insert(transitions, { name = 'init', from = 'none', to = initial })
+            end
         end
         -- 构造有限状态机对象
-        local meta = { fsm = finite_state_machine:new(transitions, states, events) }
-        meta.__index = function(_, k)
-            return meta.fsm[k]
-        end
-        local obj = {}
-        for k, v in pairs(context) do
-            obj[k] = v
-        end
-        obj = setmetatable(obj, meta)
-        -- 执行初始转换操作
+        local fsm = finite_state_machine:new(context, transitions, states, events)
+        local obj = 
+        {
+            -- 判断状态机是否转换中
+            is_transiting = function()
+                return fsm:is_transiting()
+            end,
+
+            -- 获取状态机当前状态
+            state = function()
+                return fsm:state()
+            end,
+
+            -- 判断事件是否允许执行
+            can = function(event)
+                return fsm:can(event)
+            end,
+
+            -- 列举状态名称
+            states = function()
+                return fsm:states()
+            end,
+
+            -- 列举事件名称
+            events = function(state)
+                return fsm:events(state)
+            end,
+
+            -- 提交指定事件
+            fire = function(event, ...)
+                return fsm:fire(event, ...)
+            end,
+        }
+        -- 执行初始状态转换
         if (initial ~= 'none') then
-            obj:fire('init')
+            if (not obj.fire('init')) then
+                error("transition to initial state failed!")
+            end
         end
         return obj
     end
