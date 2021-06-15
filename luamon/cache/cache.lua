@@ -134,7 +134,7 @@ end
 
 -------------------------------------------------------------------------------
 --- 模块定义
-local cache = newclass("luamon.cache.cache")
+local cache = newclass("luamon.cache")
 
 function cache:init(params)
     self.cacacity       = 0

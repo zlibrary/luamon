@@ -185,26 +185,34 @@ do  -- keep local things inside
                     meta[class].virtuals[k] = v
                 end
             end,
-            __index =                           -- 获取类型属性
-            {
-                static   = block,               -- '类型方法/静态属性'集合（实例对象元表）
-                made     = classMade,           -- 实例类型检查
-                new      = newInstance,         -- 实例创建接口
-                subclass = subclass,            -- 子类创建接口
-                virtual  = makeVirtual,         -- 虚属性定义
-                cast     = secureCast,          -- 实例类型转换（类似'C++'的类型强制转换）
-                trycast  = tryCast,             -- 实例类型转换（类似'C++'的类型强制转换）
-                super = function(class)
-                    return base
-                end,
-                name = function(class)
-                    return name
-                end,
-                inherits = function(class, other)
-                    return (base == other or base:inherits(other))
-                end,
-            },
-            __call     = newInstance,           -- 
+            __index = function(class, k)        -- 获取类型属性
+                local clazz = 
+                {
+                    static   = block,           -- '类型方法/静态属性'集合（实例对象元表）
+                    made     = classMade,       -- 实例类型检查
+                    new      = newInstance,     -- 实例创建接口
+                    subclass = subclass,        -- 子类创建接口
+                    virtual  = makeVirtual,     -- 虚属性定义
+                    cast     = secureCast,      -- 实例类型转换（类似'C++'的类型强制转换）
+                    trycast  = tryCast,         -- 实例类型转换（类似'C++'的类型强制转换）
+                    super = function(class)
+                        return base
+                    end,
+                    name = function(class)
+                        return name
+                    end,
+                    inherits = function(class, other)
+                        return (base == other or base:inherits(other))
+                    end,
+                }
+                local rvalue = clazz[k]
+                if rvalue then
+                    return rvalue
+                else
+                    return base[k]
+                end
+            end,
+            __call     = newInstance,
             __tostring = function() return name end,
         })
         return class

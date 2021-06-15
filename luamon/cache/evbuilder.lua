@@ -18,7 +18,7 @@ end
 -------------------------------------------------------------------------------
 local evbuilder = newclass("luamon.cache.evbuilder")
 
--- 数据移除通知
+-- 构建同步事件
 function evbuilder:build()
     return event:new()
 end
