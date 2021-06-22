@@ -17,11 +17,7 @@ function clazz:tick()
     if self:is_halt() then
         self:set_status(clazz.status.running)
     end
-    if self:method() then
-        return clazz.status.success
-    else
-        return clazz.status.failure
-    end
+    return self:method()
 end
 
 return clazz

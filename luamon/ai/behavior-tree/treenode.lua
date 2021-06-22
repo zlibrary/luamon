@@ -25,6 +25,9 @@ rawset(treenode, "status",
     failure   = 3,
 })
 
+-- 定义节点虚函数
+treenode:virtual("exec")
+
 -- 构造节点对象
 -- 1. 黑板对象
 -- 2. 输入映射
@@ -38,8 +41,7 @@ function treenode:init(blackboard, imports, exports)
 end
 
 function treenode:exec()
-    local status = self:tick()
-    return self:status(status)
+    return self:set_status(self:tick())
 end
 
 function treenode:tick()
@@ -83,7 +85,7 @@ function treenode:set_status(newstatus)
                 pcall(cb, self, ostatus, newstatus)
             end
         end
-        return slef.__status
+        return self.__status
     else
         error(string.format("treenode:set_status(%s) : status is invalid.", newstatus))
     end

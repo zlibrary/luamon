@@ -22,7 +22,7 @@ function clazz:add_child(child)
     end
 end
 
-function clazz:get_child_count()
+function clazz:get_children_count()
     return self.count
 end
 

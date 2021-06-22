@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
---- 'luamon.container.array'测试
+--- 有限状态机测试
 -------------------------------------------------------------------------------
 local TestSuite = require 'luamon.ltest'
 local FSM       = require 'luamon.ai.finite-state-machine'
