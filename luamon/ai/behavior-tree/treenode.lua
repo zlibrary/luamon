@@ -13,7 +13,6 @@ rawset(treenode, "category",
     condition = 2,
     control   = 3,
     decorator = 4,
-    subtree   = 5,
 })
 
 -- 节点状态枚举
