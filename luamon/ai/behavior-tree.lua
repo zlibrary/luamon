@@ -43,7 +43,7 @@ local function make_behavior_node(nc, bb, subtrees)
             return node
         end
         -- 行为节点
-        if (node:type() == node.clazz.category.action) then
+        if (node:type() == node.class.category.action) then
             return node
         end
         -- 控制节点
@@ -101,7 +101,7 @@ return
 
             -- 执行行为树
             exec = function()
-                return mbt:extc()
+                return mbt:exec()
             end,
         }
         return obj
