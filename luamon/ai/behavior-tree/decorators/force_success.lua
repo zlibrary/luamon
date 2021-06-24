@@ -13,7 +13,7 @@ end
 
 function clazz:tick()
     self:set_status(clazz.status.running)
-    local status = self.child:exec()
+    local status = self.heirs:exec()
     if (status == clazz.status.success) then
         return clazz.status.success
     end

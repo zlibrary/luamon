@@ -37,6 +37,7 @@ function clazz:halt()
         end
         child:set_status(treenode.status.idle)
     end
+    self:set_status(treenode.status.idle)
 end
 
 return clazz

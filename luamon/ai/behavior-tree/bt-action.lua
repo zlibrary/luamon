@@ -15,4 +15,8 @@ function clazz:type()
     return treenode.category.action
 end
 
+function clazz:halt()
+    self:set_status(treenode.status.idle)
+end
+
 return clazz

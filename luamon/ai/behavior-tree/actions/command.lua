@@ -1,11 +1,11 @@
 -------------------------------------------------------------------------------
---- 行为树修饰节点
+--- 行为树动作节点
 -------------------------------------------------------------------------------
 require "luamon"
-local decorator = require "luamon.ai.behavior-tree.bt-decorator"
+local action = require "luamon.ai.behavior-tree.bt-action"
 
 -------------------------------------------------------------------------------
-local clazz = newclass("luamon.ai.behavior-tree.decorators.simple", decorator)
+local clazz = newclass("luamon.ai.behavior-tree.actions.command", action)
 
 function clazz:init(method, blackboard, imports, exports)
     assert(type(method) == "function")
@@ -14,7 +14,10 @@ function clazz:init(method, blackboard, imports, exports)
 end
 
 function clazz:tick()
-    return self:method(self.child:exec())
+    if self:is_halt() then
+        self:set_status(clazz.status.running)
+    end
+    return self:method()
 end
 
 return clazz

@@ -46,17 +46,15 @@ local function make_behavior_node(nc, bb, subtrees)
         if (node:type() == node.class.category.action) then
             return node
         end
+        -- 修饰节点
+        if (node:type() == node.class.category.decorator) then
+            node:set_child(make_behavior_node(nc.child, bb, subtrees))
+            return node
+        end
         -- 控制节点
         if (node:type() == node.class.category.control) then
             for _, cc in ipairs(nc.children) do
                 node:add_child(make_behavior_node(cc, bb, subtrees))
-            end
-            return node
-        end
-        -- 修饰节点
-        if (node:type() == node.class.category.decorator) then
-            for _, cc in ipairs(nc.children) do
-                node:set_child(make_behavior_node(cc, bb, subtrees))
             end
             return node
         end

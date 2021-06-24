@@ -12,11 +12,11 @@ function clazz:init(blackboard, imports, exports)
 end
 
 function clazz:set_child(child)
-    if (self.child ~= nil) then
+    if (self.heirs ~= nil) then
         error("child has already exists.")
     end
     if (true == treenode:made(child)) then
-        self.child = child
+        self.heirs = child
     else
         error("child must be a treenode.")
     end
@@ -27,22 +27,14 @@ function clazz:type()
 end
 
 function clazz:halt()
-    local child = self.child
-    if (not child) then
+    local heirs = self.heirs
+    if (not heirs) then
         return
     end
-    if (child:is_running() == true) then
-        child:halt()
+    if (heirs:is_running() == true) then
+        heirs:halt()
     end
-    child:set_status(treenode.status.idle)
-end
-
-function clazz:exec()
-    local status = self.super:exec()
-    if (self.child:is_success() or self.child:is_failure()) then
-        self.child:set_status(treenode.status.idle)
-    end
-    return status
+    self:set_status(treenode.status.idle)
 end
 
 return clazz
