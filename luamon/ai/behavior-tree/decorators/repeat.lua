@@ -12,6 +12,11 @@ function clazz:init(blackboard, imports, exports)
     self.index = 0
 end
 
+function clazz:halt()
+    self.index = 0
+    self.super:halt()
+end
+
 function clazz:tick()
     local times = assert(self:get("decorator_repeat_times"), "Missing parameter[decorator_repeat_times].")
     self:set_status(clazz.status.running)

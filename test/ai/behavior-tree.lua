@@ -37,6 +37,8 @@ function mytest.testA()
         mytest:assert_true(bt.is_halt())
         bt.exec()
         mytest:assert_true(bt.is_success())
+        bt.exec()
+        mytest:assert_true(bt.is_success())
     end
 
     do
@@ -408,6 +410,356 @@ function mytest.testA()
         bt.exec()
         mytest:assert_true(bt.is_success())
         mytest:assert_eq(count, 2)
+        bt.halt()
+        mytest:assert_true(bt.is_halt())
+        bt.exec()
+        mytest:assert_true(bt.is_failure())
+        mytest:assert_eq(count, 5)
+    end
+
+    -- 测试'delay'节点
+    do
+        local count   = 0
+        local mconfig = 
+        {
+            maintree = 
+            {
+                modname = "luamon.ai.behavior-tree.decorators.delay",
+                child   = 
+                {
+                    modname = function(bb, imports, exports)
+                        return Command:new(function(this)
+                            count = count + 1
+                            return Command.status.success
+                        end, bb, imports, exports)
+                    end,
+                },
+                imports = { decorator_delay_times = 3 }
+            }
+        }
+        local bt = BehaviorTree.create(mconfig)
+        bt.exec()
+        mytest:assert_true(bt.is_running())
+        mytest:assert_eq(count, 0)
+        bt.exec()
+        mytest:assert_true(bt.is_running())
+        mytest:assert_eq(count, 0)
+        bt.exec()
+        mytest:assert_true(bt.is_running())
+        mytest:assert_eq(count, 0)
+        bt.exec()
+        mytest:assert_true(bt.is_success())
+        mytest:assert_eq(count, 1)
+        bt.halt()
+        mytest:assert_true(bt.is_halt())
+        bt.exec()
+        mytest:assert_true(bt.is_running())
+        mytest:assert_eq(count, 1)
+        bt.exec()
+        mytest:assert_true(bt.is_running())
+        mytest:assert_eq(count, 1)
+        bt.exec()
+        mytest:assert_true(bt.is_running())
+        mytest:assert_eq(count, 1)
+        bt.exec()
+        mytest:assert_true(bt.is_success())
+        mytest:assert_eq(count, 2)
+    end
+
+    -- 测试'sequence'节点
+    do
+        local count   = 0
+        local mconfig = 
+        {
+            maintree = 
+            {
+                modname  = "luamon.ai.behavior-tree.controls.sequence",
+                children = 
+                {
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                return Command.status.failure
+                            end, bb, imports, exports)
+                        end
+                    },
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                return Command.status.succcess
+                            end, bb, imports, exports)
+                        end
+                    },
+                }
+            }
+        }
+        local bt = BehaviorTree.create(mconfig)
+        bt.exec()
+        mytest:assert_true(bt.is_failure())
+        mytest:assert_eq(count, 1)
+        bt.halt()
+        mytest:assert_true(bt.is_halt())
+        bt.exec()
+        mytest:assert_true(bt.is_failure())
+        mytest:assert_eq(count, 2)
+    end
+    
+    do
+        local count   = 0
+        local mconfig = 
+        {
+            maintree = 
+            {
+                modname  = "luamon.ai.behavior-tree.controls.sequence",
+                children = 
+                {
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                return Command.status.success
+                            end, bb, imports, exports)
+                        end
+                    },
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                return Command.status.failure
+                            end, bb, imports, exports)
+                        end
+                    },
+                }
+            }
+        }
+        local bt = BehaviorTree.create(mconfig)
+        bt.exec()
+        mytest:assert_true(bt.is_failure())
+        mytest:assert_eq(count, 2)
+        bt.halt()
+        mytest:assert_true(bt.is_halt())
+        bt.exec()
+        mytest:assert_true(bt.is_failure())
+        mytest:assert_eq(count, 4)
+    end
+    
+    do
+        local count   = 0
+        local mconfig = 
+        {
+            maintree = 
+            {
+                modname  = "luamon.ai.behavior-tree.controls.sequence",
+                children = 
+                {
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                if (count == 1) then
+                                    return Command.status.running
+                                else
+                                    return Command.status.success
+                                end
+                            end, bb, imports, exports)
+                        end
+                    },
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                return Command.status.failure
+                            end, bb, imports, exports)
+                        end
+                    },
+                }
+            }
+        }
+        local bt = BehaviorTree.create(mconfig)
+        bt.exec()
+        mytest:assert_true(bt.is_running())
+        mytest:assert_eq(count, 1)
+        bt.exec()
+        mytest:assert_true(bt.is_failure())
+        mytest:assert_eq(count, 3)
+        bt.halt()
+        mytest:assert_true(bt.is_halt())
+        bt.exec()
+        mytest:assert_true(bt.is_failure())
+        mytest:assert_eq(count, 5)
+    end
+
+    -- 测试'parallel'节点
+    do
+        local count   = 0
+        local mconfig = 
+        {
+            maintree = 
+            {
+                modname  = "luamon.ai.behavior-tree.controls.parallel",
+                imports  = {parallel_success_threshold = 2, parallel_failure_threshold = 2},
+                children = 
+                {
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                return Command.status.success
+                            end, bb, imports, exports)
+                        end
+                    },
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                return Command.status.failure
+                            end, bb, imports, exports)
+                        end
+                    },
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                return Command.status.success
+                            end, bb, imports, exports)
+                        end
+                    },
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                return Command.status.failure
+                            end, bb, imports, exports)
+                        end
+                    },
+                }
+            }
+        }
+        local bt = BehaviorTree.create(mconfig)
+        bt.exec()
+        mytest:assert_true(bt.is_success())
+        mytest:assert_eq(count, 3)
+        bt.halt()
+        mytest:assert_true(bt.is_halt())
+        bt.exec()
+        mytest:assert_true(bt.is_success())
+        mytest:assert_eq(count, 6)
+    end
+
+    do
+        local count   = 0
+        local mconfig = 
+        {
+            maintree = 
+            {
+                modname  = "luamon.ai.behavior-tree.controls.parallel",
+                imports  = {parallel_success_threshold = 2, parallel_failure_threshold = 2},
+                children = 
+                {
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                return Command.status.failure
+                            end, bb, imports, exports)
+                        end
+                    },
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                return Command.status.failure
+                            end, bb, imports, exports)
+                        end
+                    },
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                return Command.status.success
+                            end, bb, imports, exports)
+                        end
+                    },
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                return Command.status.failure
+                            end, bb, imports, exports)
+                        end
+                    },
+                }
+            }
+        }
+        local bt = BehaviorTree.create(mconfig)
+        bt.exec()
+        mytest:assert_true(bt.is_failure())
+        mytest:assert_eq(count, 2)
+        bt.halt()
+        mytest:assert_true(bt.is_halt())
+        bt.exec()
+        mytest:assert_true(bt.is_failure())
+        mytest:assert_eq(count, 4)
+    end
+
+    do
+        local count   = 0
+        local mconfig = 
+        {
+            maintree = 
+            {
+                modname  = "luamon.ai.behavior-tree.controls.parallel",
+                imports  = {parallel_success_threshold = 2, parallel_failure_threshold = 2},
+                children = 
+                {
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                if (count == 1) then
+                                    return Command.status.running
+                                else
+                                    return Command.status.failure
+                                end
+                            end, bb, imports, exports)
+                        end
+                    },
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                return Command.status.failure
+                            end, bb, imports, exports)
+                        end
+                    },
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                return Command.status.success
+                            end, bb, imports, exports)
+                        end
+                    },
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                return Command.status.failure
+                            end, bb, imports, exports)
+                        end
+                    },
+                }
+            }
+        }
+        local bt = BehaviorTree.create(mconfig)
+        bt.exec()
+        mytest:assert_true(bt.is_running())
+        mytest:assert_eq(count, 1)
+        bt.exec()
+        mytest:assert_true(bt.is_failure())
+        mytest:assert_eq(count, 3)
         bt.halt()
         mytest:assert_true(bt.is_halt())
         bt.exec()
