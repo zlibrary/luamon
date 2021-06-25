@@ -27,7 +27,7 @@ function clazz:tick()
             self.index = self.index + 1
             self.heirs:halt()
         else
-            self.heris:halt()
+            self.heirs:halt()
             self.index = 0
             return clazz.status.failure
         end

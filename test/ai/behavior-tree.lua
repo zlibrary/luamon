@@ -65,25 +65,16 @@ function mytest.testA()
         mytest:assert_true(bt.is_success())
     end
 
-    -- 测试'decorators'节点
+    -- 测试'inverter'节点
     do
         local mconfig = 
         {
             maintree = 
             {
-                modname  = "luamon.ai.behavior-tree.controls.fallback",
-                children = 
+                modname = "luamon.ai.behavior-tree.decorators.inverter",
+                child   = 
                 {
-                    {
-                        modname = "luamon.ai.behavior-tree.decorators.inverter",
-                        child   = 
-                        {
-                            modname = "luamon.ai.behavior-tree.actions.always_success",
-                        },
-                    },
-                    {
-                        modname = "luamon.ai.behavior-tree.actions.always_failure",
-                    },
+                    modname = "luamon.ai.behavior-tree.actions.always_success",
                 }
             }
         }
@@ -101,20 +92,11 @@ function mytest.testA()
         {
             maintree = 
             {
-                modname  = "luamon.ai.behavior-tree.controls.fallback",
-                children = 
+                modname = "luamon.ai.behavior-tree.decorators.inverter",
+                child   = 
                 {
-                    {
-                        modname = "luamon.ai.behavior-tree.decorators.inverter",
-                        child   = 
-                        {
-                            modname = "luamon.ai.behavior-tree.actions.always_failure",
-                        },
-                    },
-                    {
-                        modname = "luamon.ai.behavior-tree.actions.always_failure",
-                    },
-                }
+                    modname = "luamon.ai.behavior-tree.actions.always_failure",
+                },
             }
         }
         local bt = BehaviorTree.create(mconfig)
@@ -151,6 +133,7 @@ function mytest.testA()
         mytest:assert_true(bt.is_running())
     end
 
+    -- 测试'force-failure'节点
     do
         local mconfig = 
         {
@@ -226,6 +209,7 @@ function mytest.testA()
         mytest:assert_true(bt.is_failure())
     end
 
+    -- 测试'force-success'节点
     do
         local mconfig = 
         {
@@ -301,7 +285,9 @@ function mytest.testA()
         mytest:assert_true(bt.is_success())
     end
 
+    -- 测试'repeat'节点
     do
+        local count   = 0
         local mconfig = 
         {
             maintree = 
@@ -311,6 +297,7 @@ function mytest.testA()
                 {
                     modname = function(bb, imports, exports)
                         return Command:new(function(this)
+                            count = count + 1
                             return Command.status.success
                         end, bb, imports, exports)
                     end,
@@ -321,12 +308,112 @@ function mytest.testA()
         local bt = BehaviorTree.create(mconfig)
         bt.exec()
         mytest:assert_true(bt.is_success())
+        mytest:assert_eq(count, 3)
         bt.halt()
         mytest:assert_true(bt.is_halt())
         bt.exec()
         mytest:assert_true(bt.is_success())
+        mytest:assert_eq(count, 6)
     end
 
+    do
+        local count   = 0
+        local mconfig = 
+        {
+            maintree = 
+            {
+                modname = "luamon.ai.behavior-tree.decorators.repeat",
+                child   = 
+                {
+                    modname = function(bb, imports, exports)
+                        return Command:new(function(this)
+                            count = count + 1
+                            if (count == 2) then
+                                return Command.status.failure
+                            else
+                                return Command.status.success
+                            end
+                        end, bb, imports, exports)
+                    end,
+                },
+                imports = { decorator_repeat_times = 3 }
+            }
+        }
+        local bt = BehaviorTree.create(mconfig)
+        bt.exec()
+        mytest:assert_true(bt.is_failure())
+        mytest:assert_eq(count, 2)
+        bt.halt()
+        mytest:assert_true(bt.is_halt())
+        bt.exec()
+        mytest:assert_true(bt.is_success())
+        mytest:assert_eq(count, 5)
+    end
+
+    -- 测试'retry'节点
+    do
+        local count   = 0
+        local mconfig = 
+        {
+            maintree = 
+            {
+                modname = "luamon.ai.behavior-tree.decorators.retry",
+                child   = 
+                {
+                    modname = function(bb, imports, exports)
+                        return Command:new(function(this)
+                            count = count + 1
+                            return Command.status.failure
+                        end, bb, imports, exports)
+                    end,
+                },
+                imports = { decorator_retry_times = 3 }
+            }
+        }
+        local bt = BehaviorTree.create(mconfig)
+        bt.exec()
+        mytest:assert_true(bt.is_failure())
+        mytest:assert_eq(count, 3)
+        bt.halt()
+        mytest:assert_true(bt.is_halt())
+        bt.exec()
+        mytest:assert_true(bt.is_failure())
+        mytest:assert_eq(count, 6)
+    end
+
+    do
+        local count   = 0
+        local mconfig = 
+        {
+            maintree = 
+            {
+                modname = "luamon.ai.behavior-tree.decorators.retry",
+                child   = 
+                {
+                    modname = function(bb, imports, exports)
+                        return Command:new(function(this)
+                            count = count + 1
+                            if (count == 2) then
+                                return Command.status.success
+                            else
+                                return Command.status.failure
+                            end
+                        end, bb, imports, exports)
+                    end,
+                },
+                imports = { decorator_retry_times = 3 }
+            }
+        }
+        local bt = BehaviorTree.create(mconfig)
+        bt.exec()
+        mytest:assert_true(bt.is_success())
+        mytest:assert_eq(count, 2)
+        bt.halt()
+        mytest:assert_true(bt.is_halt())
+        bt.exec()
+        mytest:assert_true(bt.is_failure())
+        mytest:assert_eq(count, 5)
+    end
 end
 
 
