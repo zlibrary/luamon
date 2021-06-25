@@ -768,199 +768,181 @@ function mytest.testA()
     end
 end
 
+-- 节点通信
+function mytest.testB()
 
--- -- 巡逻模拟
--- function mytest.testC()
+    do
+        local count   = 0
+        local mconfig = 
+        {
+            maintree = 
+            {
+                modname  = "luamon.ai.behavior-tree.controls.sequence",
+                children = 
+                {
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                this:set("v1", 1)
+                                this:set("v2", 2)
+                                return Command.status.success
+                            end, bb, imports, exports)
+                        end,
+                        exports = { v1 = "{v1}", v2 = "{v2}" }
+                    },
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                local v1 = this:get("p1")
+                                local v2 = this:get("p2")
+                                assert(v1 == 1)
+                                assert(v2 == 2)
+                                this:set("p1", v1 + 1)
+                                this:set("p2", v2 + 1)
+                                return Command.status.success
+                            end, bb, imports, exports)
+                        end,
+                        imports = { p1 = "{v1}", p2 = "{v2}" },
+                        exports = { p1 = "{p1}", p2 = "{p2}" },
+                    },
+                    {
+                        modname = function(bb, imports, exports)
+                            return Command:new(function(this)
+                                count = count + 1
+                                local v1 = this:get("k1")
+                                local v2 = this:get("k2")
+                                local p1 = this:get("k3")
+                                local p2 = this:get("k4")
+                                assert(v1 == 1)
+                                assert(v2 == 2)
+                                assert(p1 == 2)
+                                assert(p2 == 3)
+                                return Command.status.success
+                            end, bb, imports, exports)
+                        end,
+                        imports = { k1 = "{v1}", k2 = "{v2}", k3 = "{p1}", k4 = "{p2}" },
+                    },
+                }
+            }
+        }
+        local bt = BehaviorTree.create(mconfig)
+        mytest:assert_not_error(function() bt.exec() end)
+        mytest:assert_true(bt.is_success())
+        mytest:assert_eq(count, 3)
+        bt.halt()
+        mytest:assert_true(bt.is_halt())
+        mytest:assert_not_error(function() bt.exec() end)
+        mytest:assert_true(bt.is_success())
+        mytest:assert_eq(count, 6)
+    end
 
---     local mconfig = 
---     {
---         maintree = 
---         {
---             modname  = "luamon.ai.behavior-tree.controls.fallback",
---             children = 
---             {
---                 -- 搜查
---                 {
---                     modname  = "luamon.ai.behavior-tree.controls.sequence",
---                     children = 
---                     {
---                         -- 搜查
---                         {
---                             modname = function(bb, imports, exports)
---                                 return SimpleAction:new(function(this)
---                                     if (math.random(1, 99) <= 55) then
---                                         print("lookup failure")
---                                         return SimpleAction.status.failure
---                                     else
---                                         print("lookup success")
---                                         this:set("coordinate", {1, 5})
---                                         return SimpleAction.status.success
---                                     end
---                                 end, bb, imports, exports)
---                             end,
---                             exports = {coordinate = '{coordinate}'},
---                         },
---                         -- 攻击
---                         {
---                             modname = function(bb, imports, exports)
---                                 return SimpleAction:new(function(this)
---                                     local coordinate = this:get("coordinate")
---                                     if (coordinate == nil) then
---                                         print("attack error.")
---                                     else
---                                         print("attack ok", coordinate[1], coordinate[2])
---                                     end
---                                     return SimpleAction.status.success
---                                 end, bb, imports, exports)
---                             end,
---                             imports = {coordinate = '{coordinate}'},
---                         },
---                     },
---                 },
---                 -- 巡逻
---                 {
---                     modname = function(bb, imports, exports)
---                         return SimpleAction:new(function(this)
---                             print("patrol")
---                             if (math.random(1, 99) >= 33) then
---                                 return SimpleAction.status.running
---                             else
---                                 return SimpleAction.status.success
---                             end
---                         end, bb, imports, exports)
---                     end,
---                 },
---             },
---         },
---     }
+end
 
---     local bt = BehaviorTree.create(mconfig)
---     for i = 1, 10 do
---         print("\n-------------------", i)
---         bt.exec()
---         if (not bt.is_running()) then
---             bt.halt()
---         end
---     end
+-- 子树合成
+function mytest.testC()
 
+    do
+        local count   = 0
+        local value   = 0
+        local mconfig = 
+        {
+            maintree = 
+            {
+                modname  = "luamon.ai.behavior-tree.controls.sequence",
+                children = 
+                {
+                    {
+                        modname = "subtree",
+                        mapping = {v1 = "v1", v2 = "v2"},
+                        subtree = "T1",
+                    },
+                    {
+                        modname = "subtree",
+                        subtree = "T2",
+                    },
+                    {
+                        modname = "subtree",
+                        mapping = {v1 = "v1", v2 = "v2"},
+                        subtree = "T1",
+                    },
+                }
+            },
+            subtrees = 
+            {
+                T1 = 
+                {
+                    modname  = "luamon.ai.behavior-tree.controls.sequence",
+                    children = 
+                    {
+                        {
+                            modname = function(bb, imports, exports)
+                                return Command:new(function(this)
+                                    count = count + 1
+                                    local v1 = this:get("p1")
+                                    local v2 = this:get("p2")
+                                    if (v1 == nil) then
+                                        v1 = 0
+                                    end
+                                    if (v2 == nil) then
+                                        v2 = 0
+                                    end
+                                    value = value + v1 + v2
+                                    this:set("p1", v1)
+                                    this:set("p2", v2)
+                                    return Command.status.success
+                                end, bb, imports, exports)
+                            end,
+                            imports = { p1 = "{v1}", p2 = "{v2}" },
+                            exports = { p1 = "{p1}", p2 = "{p2}" },
+                        },
+                        {
+                            modname = function(bb, imports, exports)
+                                return Command:new(function(this)
+                                    count = count + 1
+                                    local v1 = this:get("p1") + 1
+                                    local v2 = this:get("p2") + 1
+                                    value = value + v1 + v2
+                                    this:set("p1", v1)
+                                    this:set("p2", v2)
+                                    return Command.status.success
+                                end, bb, imports, exports)
+                            end,
+                            imports = { p1 = "{p1}", p2 = "{p2}" },
+                            exports = { p1 = "{v1}", p2 = "{v2}" },
+                        },
+                    }
+                },
+                T2 = 
+                {
+                    modname = function(bb, imports, exports)
+                        return Command:new(function(this)
+                            count = count + 1
+                            local v1 = this:get("v1")
+                            local v2 = this:get("v2")
+                            assert(v1 == nil)
+                            assert(v2 == nil)
+                            return Command.status.success
+                        end, bb, imports, exports)
+                    end,
+                    imports = { v1 = "{v1}", v2 = "{v2}" },
+                }
+            },
+        }
+        local bt = BehaviorTree.create(mconfig)
+        mytest:assert_not_error(function() bt.exec() end)
+        mytest:assert_true(bt.is_success())
+        mytest:assert_eq(count, 5)
+        mytest:assert_eq(value, 8)
+        bt.halt()
+        mytest:assert_true(bt.is_halt())
+        mytest:assert_not_error(function() bt.exec() end)
+        mytest:assert_true(bt.is_success())
+        mytest:assert_eq(count, 10)
+        mytest:assert_eq(value, 32)
+    end
 
---     -- local bb = blackboard:new()
---     -- local bt = fallback:new(bb)
-
---     -- -- 查找敌人
---     -- local lookup = action:new(function(this)
---     --     if (math.random(1, 99) <= 55) then
---     --         print("lookup failure")
---     --         return action.status.failure
---     --     else
---     --         print("lookup success")
---     --         this:set("coordinate", {1, 5})
---     --         return action.status.success
---     --     end
---     -- end, bb, {}, { coordinate = '{coordinate}' })
-
---     -- -- 攻击敌人
---     -- local attack = action:new(function(this)
---     --     local coordinate = this:get("coordinate")
---     --     if (coordinate == nil) then
---     --         print("attack error.")
---     --     else
---     --         print("attack ok", coordinate[1], coordinate[2])
---     --     end
---     --     return action.status.success
---     -- end, bb, { coordinate = '{coordinate}' }, {})
-
---     -- -- 顺序节点
---     -- local se = sequence:new(bb, {}, {})
---     -- se:add_child(lookup)
---     -- se:add_child(attack)
-
---     -- -- 自动巡逻
---     -- local patrol = action:new(function()
---     --     print("patrol")
---     --     if (math.random(1, 99) >= 33) then
---     --         return action.status.running
---     --     else
---     --         return action.status.success
---     --     end
---     -- end,bb, {}, {})
-
---     -- -- 注册节点
---     -- bt:add_child(se)
---     -- bt:add_child(patrol)
-
---     -- -- 执行相关行为
---     -- for i = 1, 10 do
---     --     bt:exec()
---     --     if (not bt:is_running()) then
---     --         bt:halt()
---     --     end
---     -- end
-
--- end
-
--- -- 子树模拟
--- -- function mytest.testB()
-
--- --     -- 主干部分
--- --     local mbb = blackboard:new()
--- --     local mbt = fallback:new(mbb)
--- --     local cbb = blackboard:new(mbb)
-
--- --     cbb:redirect("mark", "target")
-
--- --     -- 查找敌人
--- --     local lookup = action:new(function(this)
--- --         if (math.random(1, 99) <= 44) then
--- --             print("lookup failure")
--- --             return action.status.failure
--- --         else
--- --             print("lookup success")
--- --             this:set("coordinate", {1, 5})
--- --             return action.status.success
--- --         end
--- --     end, cbb, {}, { coordinate = '{coordinate}' })
-
--- --     -- 攻击敌人
--- --     local attack = action:new(function(this)
--- --         local coordinate = this:get("coordinate")
--- --         if (coordinate == nil) then
--- --             print("attack error.")
--- --         else
--- --             print("attack ok", coordinate[1], coordinate[2])
--- --             this:set("mark", "attach enemy.")
--- --         end
--- --         return action.status.success
--- --     end, cbb, { coordinate = '{coordinate}' }, { mark = '{mark}' })
-
--- --     -- 顺序节点
--- --     local se = sequence:new(cbb, {}, {})
--- --     se:add_child(lookup)
--- --     se:add_child(attack)
-
--- --     -- 自动巡逻
--- --     local patrol = action:new(function(this)
--- --         print("patrol", this:get("mark") or "unknown")
--- --         if (math.random(1, 99) >= 33) then
--- --             return action.status.running
--- --         else
--- --             this:set("mark", "reset")
--- --             return action.status.success
--- --         end
--- --     end, mbb, {mark = "{target}"}, {mark = "{target}"})
-
--- --     -- 注册节点
--- --     mbt:add_child(se)
--- --     mbt:add_child(patrol)
-
--- --     -- 执行相关行为
--- --     for i = 1, 20 do
--- --         mbt:exec()
--- --         if (not mbt:is_running()) then
--- --             mbt:halt()
--- --         end
--- --     end
-
--- -- end
+end
 
 mytest:run()
