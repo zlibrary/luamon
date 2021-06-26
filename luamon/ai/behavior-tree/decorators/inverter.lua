@@ -13,7 +13,7 @@ end
 
 function clazz:tick()
     self:set_status(clazz.status.running)
-    local status = self.heirs:exec()
+    local status = self.object:exec()
     if (status == clazz.status.success) then
         return clazz.status.failure
     end
@@ -23,7 +23,7 @@ function clazz:tick()
     if (status == clazz.status.running) then
         return clazz.status.running
     else
-        error("decorator.child never return idle.")
+        error("decorator.object never return idle.")
     end
 end
 

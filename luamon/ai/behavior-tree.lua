@@ -48,7 +48,7 @@ local function make_behavior_node(nc, bb, subtrees)
         end
         -- 修饰节点
         if (node:type() == node.class.category.decorator) then
-            node:set_child(make_behavior_node(nc.child, bb, subtrees))
+            node:set_object(make_behavior_node(nc.child, bb, subtrees))
             return node
         end
         -- 控制节点

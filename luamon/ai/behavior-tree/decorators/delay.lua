@@ -21,7 +21,7 @@ function clazz:tick()
     local times = assert(self:get("decorator_delay_times"), "Missing parameter[decorator_delay_times].")
     self:set_status(clazz.status.running)
     if (self.times >= times) then
-        return self.heirs:exec()
+        return self.object:exec()
     else
         self.times = self.times + 1
         return clazz.status.running
